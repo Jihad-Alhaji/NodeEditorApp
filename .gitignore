@@ -39,4 +39,8 @@
 *.tlog
 *.ilk
 
-BioAi/**
+
+.vs/
+x64/
+BioAI/
+
