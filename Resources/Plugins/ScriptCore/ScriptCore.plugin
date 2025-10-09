@@ -1,0 +1,8 @@
+{
+    "Author": "JJEE Team",
+    "Dependencies":[],
+    "Description": "lua script modules for arc core libraries",
+    "LoadMode": 0,
+    "Name": "ScriptCore",
+    "Version": "1.0"
+}

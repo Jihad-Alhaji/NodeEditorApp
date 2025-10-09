@@ -1,0 +1,9 @@
+{
+    "Author":"JJEE Team",
+    "Dependencies":
+    [],
+    "Description":"plugins panel, UI panel to access plugins",
+    "LoadMode": 0,
+    "Name":"PluginsPanel",
+    "Version":"1.0"
+}

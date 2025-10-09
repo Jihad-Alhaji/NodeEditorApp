@@ -1,0 +1,9 @@
+{
+    "Author":"JJEE Team",
+    "Dependencies":
+    ["ScriptCore"],
+    "Description":"ImGui Lua support",
+    "LoadMode": 0,
+    "Name":"ImguiScript",
+    "Version":"1.0"
+}
