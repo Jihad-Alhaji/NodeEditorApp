@@ -1,13 +1,75 @@
 #include "GraphNode.h"
 #include "GraphView.h" 
+#include<ArcLog/LogSystem.h>
 namespace NodeEditor
 {
+    GraphPin::GraphPin(std::shared_ptr<class GraphNode> parentNode, EPinType pinType, std::string pinName) :Widget(std::move(pinName))
+    {
+        Type = pinType;
+        ParentNode = parentNode;
+        bTickAllowed = false;
+        Size = { 16,16 };
+        HorizontalAlign = EAlign::Center;
+        VerticalAlign = EAlign::Top;
+        bDraggable = true;
+    }
+    void GraphPin::Draw()
+    {
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        ImVec2 center = AbsoluteRect.Center();
+        float  radius = 8;
+        dl->AddCircleFilled(center, radius, IM_COL32(20, 220, 210, 220));
+        if (bHovered)
+        {
+            dl->AddCircle(center, radius + 1, IM_COL32(220, 200, 20, 220),0.f,2.f);
+        }
+
+        if (bDragged)
+        {
+            ImDrawList* dl = ImGui::GetForegroundDrawList();
+            ImVec2 mPos = ImGui::GetMousePos();
+            float offset = Type == EPinType::Output ? 50.f : -50.f;
+           
+            dl->AddBezierCubic(center, {center.x + offset,center.y}, { mPos.x - offset,mPos.y }, mPos, IM_COL32(20, 220, 210, 220), 5.f);
+        }
+    }
+
+    bool GraphPin::OnRecieveDrop(WidgetEvent& e)
+    {
+        GraphPin* inPin = static_cast<GraphPin*>(e.Payload);
+        //connect pins of different types, that are not the same pin and that are on different nodes
+        if (inPin && inPin != this && inPin->Type != Type && ParentNode.lock() != inPin->ParentNode.lock())
+        {
+            GraphView* g = ParentNode.lock()->GetGraph();
+            //always make connects from an output pin to an input pin
+            if (Type == EPinType::Input)
+            {
+                g->AddConnection({ inPin->shared_from_this() , shared_from_this() });
+            }
+            else
+            {
+                g->AddConnection({ shared_from_this(),inPin->shared_from_this() });
+            }
+           
+            return true;
+        }
+        return false;
+    }
 
     GraphNode::GraphNode(const std::string& title, const ImVec2& graphPos)
         : Widget("GraphNode"), Title(title), GraphPos(graphPos)
     {
         Size = NodeSize;
         bTickAllowed = false;
+        VB_InPins = std::make_shared<UI_VerticalBox>();
+        VB_InPins->SetAlignment(EAlign::Left, EAlign::Center);
+        VB_InPins->SetAutoSize(true);
+        AddChild(VB_InPins);
+
+        VB_OutPins = std::make_shared<UI_VerticalBox>();
+        VB_OutPins->SetAlignment(EAlign::Right, EAlign::Center);
+        VB_OutPins->SetAutoSize(true);
+        AddChild(VB_OutPins);
     }
 
     void GraphNode::UpdateLayout(const Rect& ParentRect)
@@ -33,32 +95,34 @@ namespace NodeEditor
         }
     }
 
-    // add new pin and return shared_ptr
-    std::shared_ptr<GraphPin> GraphNode::AddPin(EPinType type, const std::string& name, ImVec2 localPos)
+    std::shared_ptr<GraphPin> GraphNode::AddPin(EPinType type, const std::string& name)
     {
-        auto p = std::make_shared<GraphPin>(type, name, localPos);
-        p->ParentNode = shared_from_this();
-        if (type == EPinType::Input) Inputs.push_back(p); else Outputs.push_back(p);
+        auto p = std::make_shared<GraphPin>(shared_from_this(),type , name);
+        if (type == EPinType::Input)
+        {
+            VB_InPins->AddChild(p);
+        }
+        else
+        {
+            VB_OutPins->AddChild(p);
+        }
         return p;
     }
-
-    Rect GraphNode::GetRect() const
-    {
-        // AbsoluteRect is set by UpdateLayout; use it
-        return AbsoluteRect;
-    }
-
+    
     GraphView* GraphNode::GetGraph() const
     {
         return dynamic_cast<GraphView*>(Parent);
-    };
-
-    // Drawing uses AbsoluteRect (screen)
+    }
+    
     void GraphNode::Draw()
     {
         ImDrawList* dl = ImGui::GetWindowDrawList();
         ImVec2 a = AbsoluteRect.Min;
         ImVec2 b = AbsoluteRect.Max;
+
+        //padding so pins appear outside a little
+        a.x += 8;
+        b.x -= 8;
 
         // Node background
         dl->AddRectFilled(a, b, IM_COL32(60, 60, 60, 220), 6.0f);
@@ -71,31 +135,14 @@ namespace NodeEditor
         dl->AddText(ImVec2(a.x + 8.0f, a.y + 4.0f), IM_COL32_WHITE, Title.c_str());
 
         // Body text (placeholder)
-        dl->AddText(ImVec2(a.x + 8.0f, a.y + 30.0f), IM_COL32(200, 200, 200, 255), "Node content");
-
-        // Draw pins (circles)
-        auto drawPin = [&](const std::shared_ptr<GraphPin>& pin, ImU32 color)
-        {
-            ImVec2 p = pin->GetScreenPos(static_cast<GraphView*>(GetParent()));
-            dl->AddCircleFilled(p, 6.0f, color);
-        };
-
-        for (auto& pin : Inputs)
-            drawPin(pin, IM_COL32(180, 180, 180, 255));
-        for (auto& pin : Outputs)
-            drawPin(pin, IM_COL32(180, 180, 180, 255));
-
+        dl->AddText(ImVec2(a.x + 8.0f, a.y + 30.0f), IM_COL32(200, 200, 200, 220), "Node content");
+        
         if (bFocused)
         {
-            dl->AddRect(a, b, IM_COL32(80, 120, 180, 220), 6.f, 0, 3.f);
+            dl->AddRect(a, b, IM_COL32(220, 200, 20, 220), 6.f, 0, 2.f);
         }
-    }
-
-    inline float ImLengthSqr(const ImVec2& a, const ImVec2& b)
-    {
-        ImVec2 temp = a - b;
-        temp *= temp;
-        return temp.x + temp.y;
+        //draws children including pins
+        Widget::Draw();
     }
 
     bool GraphNode::OnMouseClick(WidgetEvent& e)
@@ -104,7 +151,7 @@ namespace NodeEditor
         if (e.Key == ImGuiMouseButton_Left)
         {
             auto gv = GetGraph();
-            auto r = GetRect();
+            const auto& r = AbsoluteRect;
             // header region heuristic: top 22 px
             if (e.MousePos.y >= r.Min.y && e.MousePos.y <= r.Min.y + 22.0f)
             {
@@ -128,20 +175,5 @@ namespace NodeEditor
     bool GraphNode::OnMouseMove(WidgetEvent& e)
     {
         return false;
-    }
-
-    // GraphPin screen position implementation
-    ImVec2 GraphPin::GetScreenPos(const GraphView* view) const
-    {
-        auto nodePtr = ParentNode.lock();
-        if (!nodePtr || !view) return ImVec2(0, 0);
-        // node absolute rect
-        Rect NRect = nodePtr->GetAbsoluteRect();
-        ImVec2 offset = NRect.Min;
-        if (Type == EPinType::Output)
-        {
-            offset.x = NRect.Max.x;
-        }
-        return offset + LocalPos;
     }
 }

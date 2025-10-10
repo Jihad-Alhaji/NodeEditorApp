@@ -119,8 +119,15 @@ void UIManager::HandleEvents()
     // left Mouse release
     if (io.MouseReleased[ImGuiMouseButton_Left])
     {
-        WidgetEvent Release(EEventType::MouseRelease, io.MousePos, ImGuiMouseButton_Left);
-        DispatchEvent(Release);
+        if (IsDragging())
+        {
+            EndDrag();
+        }
+        else
+        {
+            WidgetEvent Release(EEventType::MouseRelease, io.MousePos, ImGuiMouseButton_Left);
+            DispatchEvent(Release);
+        }
     }
 
     // right Mouse click
@@ -138,7 +145,7 @@ void UIManager::HandleEvents()
         WidgetEvent Release(EEventType::MouseRelease, io.MousePos, ImGuiMouseButton_Right);
         DispatchEvent(Release);
     }
-
+    
     //mouse wheel
     if (io.MouseWheel != 0.f)
     {
@@ -148,8 +155,20 @@ void UIManager::HandleEvents()
 
     if (io.MouseDelta != ImVec2{0.f,0.f})
     {
-        WidgetEvent e(EEventType::MouseMove, io.MousePos, 0, io.MouseDelta);
-        DispatchEvent(e);
+        if (IsDragging())
+        {
+            UpdateDrag();
+        }
+        else if (ShouldStartDrag() && FocusedWidget == HoveredWidget && FocusedWidget && FocusedWidget->IsDraggable())
+        {
+            BeginDrag(FocusedWidget);
+        }
+        else
+        {
+            WidgetEvent e(EEventType::MouseMove, io.MousePos, 0, io.MouseDelta);
+            DispatchEvent(e);
+        }
+      
     }
     
     // Keyboard events (only to focused widget)
@@ -214,4 +233,49 @@ void UIManager::DispatchEvent(WidgetEvent& Event, bool OnlyOnHovered)
 void UIManager::SetViewRect(Rect newRect)
 {
     ViewRect = std::move(newRect);
+}
+
+bool UIManager::BeginDrag(Widget* wid)
+{
+    if (IsDragging() || wid == nullptr || !wid->IsDraggable())
+        return false;
+
+    DraggedWidget = wid;
+    DraggedWidget->OnDragStarted();
+    return true;
+}
+
+void UIManager::UpdateDrag()
+{
+    if (DraggedWidget != nullptr)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        DraggedWidget->OnDragUpdate(io.MousePos,io.MouseDelta);
+    }
+}
+
+void UIManager::EndDrag(bool drop)
+{
+    if (DraggedWidget == nullptr)
+    {
+        return;
+    }
+
+    DraggedWidget->OnDragEnded();
+
+    if (drop)
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        WidgetEvent dropEvent(EEventType::Drop,io.MousePos,0,io.MouseDelta);
+        dropEvent.Payload = DraggedWidget;
+        DispatchEvent(dropEvent, false);
+    }
+    DraggedWidget = nullptr;
+}
+
+bool UIManager::ShouldStartDrag() const
+{
+    ImGuiIO& io = ImGui::GetIO();
+    ImVec2 dDist = io.MouseDragMaxDistanceAbs[ImGuiMouseButton_Left];
+    return io.MouseDown[ImGuiMouseButton_Left] && (dDist.x >= io.MouseDragThreshold || dDist.y >= io.MouseDragThreshold);
 }

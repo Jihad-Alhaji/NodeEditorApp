@@ -29,6 +29,7 @@ struct Rect
     }
 
     inline Vec2 Size() const { return Max - Min; }
+    inline Vec2 Center()const { return (Min + Max) * 0.5f; }
 };
 
 enum class EEventType
@@ -43,7 +44,8 @@ enum class EEventType
     FocusGained,
     FocusLost,
     KeyDown,
-    KeyUp
+    KeyUp,
+    Drop
 };
 
 struct WidgetEvent
@@ -52,13 +54,14 @@ struct WidgetEvent
     Vec2 MousePos = {};
     Vec2 Value = {};
     int Key = 0;
-   
+    void* Payload = nullptr;
+
     WidgetEvent(EEventType InType = EEventType::None, Vec2 mousePos = {}, int key = 0, Vec2 value = {})
         : Type(InType), MousePos(mousePos), Key{ key }, Value{value} {
     }
 };
 
-class Widget
+class Widget 
 {
 protected:
     std::string Name;
@@ -71,12 +74,14 @@ protected:
     uint32_t bVisible : 1 = true;
     uint32_t bHovered : 1 = false;
     uint32_t bFocused : 1 = false;
-
+    uint32_t bAutoSize:1 = false;
+    uint32_t bDraggable:1 = false;
+    uint32_t bDragged :1= false;
     // Layout
     Vec2 Position = { 0, 0 };
     Vec2 Size = { 100, 30 };
     Rect AbsoluteRect = {};
-    bool bAutoSize = false;
+    
 
     EAlign HorizontalAlign = EAlign::Left;
     EAlign VerticalAlign = EAlign::Top;
@@ -86,11 +91,11 @@ public:
     virtual ~Widget() = default;
 
     // --- Lifecycle ---
-    virtual void Construct() {}
-    virtual void Destruct() {}
+    virtual void Construct();
+    virtual void Destruct();
 
-    virtual void Tick(double DeltaTime) {}
-    virtual void Draw() {}
+    virtual void Tick(double DeltaTime);
+    virtual void Draw();
 
     // --- Layout ---
     virtual void UpdateLayout(const Rect& ParentRect);
@@ -152,6 +157,14 @@ public:
         HorizontalAlign = HAlign;
         VerticalAlign = VAlign;
     }
+
+    //drag - drop
+    virtual void OnDragStarted();
+    virtual void OnDragUpdate(const ImVec2& mPos, const ImVec2& delta) {};
+    virtual void OnDragEnded();
+    virtual bool OnRecieveDrop(WidgetEvent& e) { return false; };
+    bool IsDraggable()const { return bDraggable;  }
+
 
     const std::string& GetName() const { return Name; }
 };

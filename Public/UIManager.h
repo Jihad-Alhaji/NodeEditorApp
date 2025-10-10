@@ -16,6 +16,8 @@ private:
     Widget* HoveredWidget = nullptr;
     Widget* FocusedWidget = nullptr;
 
+    Widget* DraggedWidget = nullptr;
+
 public:
     UIManager(Vec2 Size);
 
@@ -43,4 +45,17 @@ public:
     void SetViewRect(Rect newRect);
 
     const Rect& GetViewRect() const { return ViewRect; }
+
+    //drag drop features
+    
+    bool BeginDrag(Widget* wid);
+    void UpdateDrag();
+
+    //if drop = true, then will fire a drop event with the Widget* as payload
+    void EndDrag(bool drop = true);
+
+    bool IsDragging()const { return DraggedWidget != nullptr; };
+
+protected:
+    bool ShouldStartDrag()const;
 };

@@ -30,13 +30,13 @@ bool MyApp::Init()
 		g->SetAlignment(EAlign::Center, EAlign::Center);
 		mUIRoot->AddRootWidget(g);
 		auto n = std::make_shared<NodeEditor::GraphNode>("test 1", ImVec2{ 0,0 });
-		n->AddPin(NodeEditor::EPinType::Input, "in", {});
-		n->AddPin(NodeEditor::EPinType::Output, "out", {});
+		n->AddPin(NodeEditor::EPinType::Input, "in");
+		n->AddPin(NodeEditor::EPinType::Output, "out");
 		g->AddNode(n);
 
 		auto b = std::make_shared<NodeEditor::GraphNode>("test 1", ImVec2{ 100,0 });
-		b->AddPin(NodeEditor::EPinType::Input, "in", {});
-		b->AddPin(NodeEditor::EPinType::Output, "out", {});
+		b->AddPin(NodeEditor::EPinType::Input, "in");
+		b->AddPin(NodeEditor::EPinType::Output, "out");
 		g->AddNode(b);
 	}
 	return true;

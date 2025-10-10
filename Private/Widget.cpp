@@ -82,6 +82,16 @@ void Widget::AddChild(std::shared_ptr<Widget> Child)
     Children.push_back(std::move(Child));
 }
 
+void Widget::OnDragStarted()
+{
+    bDragged = true;
+}
+
+void Widget::OnDragEnded()
+{
+    bDragged = false;
+}
+
 bool Widget::OnEvent(WidgetEvent& Event)
 {
     switch (Event.Type)
@@ -110,9 +120,44 @@ bool Widget::OnEvent(WidgetEvent& Event)
         return OnKeyDown(Event);
     case EEventType::KeyUp:
         return OnKeyUp(Event);
+    case EEventType::Drop:
+        return OnRecieveDrop(Event);
     default:
         break;
     }
     
     return false;
+}
+
+void Widget::Tick(double dt)
+{
+    for (auto& c : Children)
+    {
+        if (c->CanTick())
+           c->Tick(dt);
+    }
+}
+
+void Widget::Draw()
+{
+    for (auto& c : Children)
+    {
+        if (c->IsVisible())
+            c->Draw();
+    }
+}
+
+void Widget::Construct()
+{
+    for (auto& c : Children)
+    {
+        c->Construct();
+    }
+}
+void Widget::Destruct()
+{
+    for (auto& c : Children)
+    {
+        c->Destruct();
+    }
 }

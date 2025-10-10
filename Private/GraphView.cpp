@@ -85,8 +85,8 @@ namespace NodeEditor
             auto f = conn.From.lock();
             auto t = conn.To.lock();
             if (!f || !t) continue;
-            ImVec2 p1 = f->GetScreenPos(this);
-            ImVec2 p2 = t->GetScreenPos(this);
+            ImVec2 p1 = f->GetAbsoluteRect().Center();
+            ImVec2 p2 = t->GetAbsoluteRect().Center();
             ImVec2 c1 = ImVec2(p1.x + 60.0f, p1.y);
             ImVec2 c2 = ImVec2(p2.x - 60.0f, p2.y);
             dl->AddBezierCubic(p1, c1, c2, p2, IM_COL32(120, 160, 255, 255), 3.0f);
@@ -136,7 +136,6 @@ namespace NodeEditor
     {
         DraggedNode = nullptr;
     }
-
 
     bool GraphView::OnMouseWheel(WidgetEvent& e)
     {

@@ -160,6 +160,7 @@
     <ClCompile Include="Private\MyApp.cpp" />
     <ClCompile Include="Private\Source.cpp" />
     <ClCompile Include="Private\UIManager.cpp" />
+    <ClCompile Include="Private\UI_VerticalBox.cpp" />
     <ClCompile Include="Private\Widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +172,7 @@
     <ClInclude Include="Public\GraphView.h" />
     <ClInclude Include="Public\MyApp.h" />
     <ClInclude Include="Public\UIManager.h" />
+    <ClInclude Include="Public\UI_VerticalBox.h" />
     <ClInclude Include="Public\Widget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
