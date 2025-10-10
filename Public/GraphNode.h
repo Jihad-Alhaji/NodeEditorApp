@@ -43,10 +43,6 @@ public:
     ImVec2 GraphPos = { 0, 0 }; // position in graph space (not screen)
     ImVec2 NodeSize = { 160, 80 };
 
-    bool bSelected = false;
-    bool bDragging = false;
-    ImVec2 DragOffset; // screen-space offset while dragging
-
     std::vector<std::shared_ptr<GraphPin>> Inputs;
     std::vector<std::shared_ptr<GraphPin>> Outputs;
 
@@ -63,6 +59,8 @@ public:
     // helper
     Rect GetRect() const; // in screen space (AbsoluteRect)
    
+    inline class GraphView* GetGraph()const;
+
     // convenience to add pins
     std::shared_ptr<GraphPin> AddPin(EPinType type, const std::string& name, ImVec2 localPos);
 };

@@ -187,6 +187,7 @@ void UIManager::DispatchEvent(WidgetEvent& Event, bool OnlyOnHovered)
 
     if (!Hit && OnlyOnHovered) return;
 
+    if(!Hit)
     // Find topmost hit widget among all roots
     for (auto it = RootWidgets.rbegin(); it != RootWidgets.rend(); ++it)
     {

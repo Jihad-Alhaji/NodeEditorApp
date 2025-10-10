@@ -25,9 +25,14 @@ namespace NodeEditor
         void AddConnection(const GraphConnection& conn);
 
         // link dragging API for nodes to call
-        void BeginLinkFromPin(std::shared_ptr<GraphPin> pin);
-        void UpdateLinkDrag(const ImVec2& mouseScreenPos);
-        void TryCompleteLink(std::shared_ptr<GraphPin> targetPin);
+        //void BeginLinkFromPin(std::shared_ptr<GraphPin> pin);
+        //void UpdateLinkDrag(const ImVec2& mouseScreenPos);
+        //void TryCompleteLink(std::shared_ptr<GraphPin> targetPin);
+
+        //node dragging logic
+        void BeginDragNode(std::shared_ptr<GraphNode> n);
+        void UpdateDragNode(const ImVec2& mouseDelta);
+        void EndDragNode();
 
         bool OnMouseWheel(WidgetEvent& e)override;
         bool OnMouseClick(WidgetEvent& e)override;
@@ -42,13 +47,12 @@ namespace NodeEditor
         ImVec2 ZoomRange;
         float Zoom;
         float BGTextureTileing;
+
         // nodes and connections
         std::vector<std::shared_ptr<GraphNode>> Nodes;
         std::vector<GraphConnection> Connections;
 
-        // link dragging state
-        std::shared_ptr<GraphPin> DraggingFromPin;
-        ImVec2 DragMousePos;
+        std::shared_ptr<GraphNode> DraggedNode;
 
         // drawing helpers
         void DrawBackgroundGrid();
