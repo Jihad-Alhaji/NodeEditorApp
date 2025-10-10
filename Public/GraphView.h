@@ -33,14 +33,15 @@ namespace NodeEditor
         bool OnMouseClick(WidgetEvent& e)override;
         bool OnMouseRelease(WidgetEvent& e)override;
         bool OnMouseMove(WidgetEvent& e)override;
+
+        inline float GetZoom()const { return Zoom; }
     protected:
         // original fields
         std::shared_ptr<Graphics::SimpleTexture> Tex_BG;
         ImVec2 ScrollOffset;
-        float Zoom;
-
         ImVec2 ZoomRange;
-
+        float Zoom;
+        float BGTextureTileing;
         // nodes and connections
         std::vector<std::shared_ptr<GraphNode>> Nodes;
         std::vector<GraphConnection> Connections;

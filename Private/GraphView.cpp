@@ -13,10 +13,10 @@ namespace NodeEditor
         Position = { 0, 0 };
         Size = { 800, 600 };
         ScrollOffset = { 0, 0 };
-        Zoom = 0.3f;
-        ZoomRange = { 0.1f, 0.5f };
+        Zoom = 1.f;
+        ZoomRange = { 0.6f, 1.8f };
         bTickAllowed = true;
-
+        BGTextureTileing = 4;
         DraggingFromPin = nullptr;
     }
 
@@ -32,8 +32,6 @@ namespace NodeEditor
     {
         Nodes.push_back(node);
         AddChild(node); // so FindWidgetAt works via widget tree
-        // sync node widget position/size to graph pos
-        node->SyncPositionFromGraph(this);
     }
 
     void GraphView::AddConnection(const GraphConnection& conn)
@@ -43,12 +41,12 @@ namespace NodeEditor
 
     ImVec2 GraphView::ScreenToGraph(const ImVec2& screenPos) const
     {
-        return screenPos - AbsoluteRect.Min - ScrollOffset * Zoom;
+        return (screenPos - AbsoluteRect.Min) / Zoom - ScrollOffset;
     }
 
     ImVec2 GraphView::GraphToScreen(const ImVec2& graphPos) const
     {
-        return AbsoluteRect.Min + graphPos + ScrollOffset * Zoom;
+        return (graphPos + ScrollOffset) * Zoom + AbsoluteRect.Min;
     }
 
     void GraphView::Draw()
@@ -136,9 +134,10 @@ namespace NodeEditor
 
     bool GraphView::OnMouseWheel(WidgetEvent& e)
     {
-        float wheel = e.Value.x;
-        float oldZoom = Zoom;
-        Zoom = std::clamp(Zoom + wheel * 0.1f, ZoomRange.x, ZoomRange.y);
+       
+        ImVec2 OldMouseGraphPos = ScreenToGraph(e.MousePos);
+        Zoom = std::clamp(Zoom + e.Value.x * 0.2f, ZoomRange.x, ZoomRange.y);
+        ScrollOffset += ScreenToGraph(e.MousePos) - OldMouseGraphPos;
         return true;
     }
 
@@ -152,12 +151,11 @@ namespace NodeEditor
         // pan if right mouse down and move
         if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
         {
-            ScrollOffset += e.Value / Zoom;
+            ScrollOffset += e.Value / Zoom; //zoom aware scrolling
             return true;
         }
         return false;
     }
-
 
     bool GraphView::OnMouseClick(WidgetEvent& e)
     {
@@ -190,20 +188,16 @@ namespace NodeEditor
             return;
 
         ImDrawList* drawList = ImGui::GetWindowDrawList();
-        ImVec2 canvasPos = ImGui::GetCursorScreenPos();
-        ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-
+        ImVec2 tiling (BGTextureTileing / Tex_BG->GetWidth() , BGTextureTileing / Tex_BG->GetHeight() );
+        
         // Draw tiled background texture that scrolls and zooms with the view
-        ImVec2 uv0 = ImVec2(ScrollOffset.x / Tex_BG->GetWidth(), ScrollOffset.y / Tex_BG->GetHeight());
-        ImVec2 uv1 = ImVec2(
-            (ScrollOffset.x - canvasSize.x / Zoom) / Tex_BG->GetWidth(),
-            (ScrollOffset.y - canvasSize.y / Zoom) / Tex_BG->GetHeight()
-        );
+        ImVec2 uv0 = ScrollOffset * tiling;
+        ImVec2 uv1 = (ScrollOffset - Size / Zoom) * tiling;
 
         drawList->AddImage(
             (ImTextureID)Tex_BG->GetTexID(),
-            canvasPos,
-            canvasPos + canvasSize,
+            AbsoluteRect.Min,
+            AbsoluteRect.Max,
             uv0,
             uv1
         );
@@ -211,7 +205,6 @@ namespace NodeEditor
 
     ImVec2 GraphView::GetCanvasOrigin() const
     {
-        ImVec2 p = ImGui::GetCursorScreenPos();
-        return ImVec2(p.x + ScrollOffset.x, p.y + ScrollOffset.y);
+        return GraphToScreen({ 0.f,0.f });
     }
 }

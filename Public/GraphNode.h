@@ -62,8 +62,7 @@ public:
 
     // helper
     Rect GetRect() const; // in screen space (AbsoluteRect)
-    // call after changing GraphPos to sync Position/AbsoluteRect
-    void SyncPositionFromGraph(const GraphView* view);
+   
     // convenience to add pins
     std::shared_ptr<GraphPin> AddPin(EPinType type, const std::string& name, ImVec2 localPos);
 };

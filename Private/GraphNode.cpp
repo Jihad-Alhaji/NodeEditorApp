@@ -12,8 +12,25 @@ namespace NodeEditor
 
     void GraphNode::UpdateLayout(const Rect& ParentRect)
     {
-        SyncPositionFromGraph(dynamic_cast<GraphView*>(Parent));
-        Widget::UpdateLayout(ParentRect);
+        GraphView* view = dynamic_cast<GraphView*>(Parent);
+        if (!view) return;
+
+        // compute screen position and set Position so UpdateLayout makes AbsoluteRect correct
+        ImVec2 screen = view->GraphToScreen(GraphPos);
+
+        // Position is relative to parent (GraphView's AbsoluteRect.Min). We'll set Position accordingly
+        Position = screen - ParentRect.Min;
+        Size = NodeSize * view->GetZoom();
+
+        AbsoluteRect.Min = screen;
+        AbsoluteRect.Max = screen + Size;
+
+        // Propagate to children
+        for (auto& Child : Children)
+        {
+            if (Child->IsVisible())
+                Child->UpdateLayout(AbsoluteRect);
+        }
     }
 
     // add new pin and return shared_ptr
@@ -29,16 +46,6 @@ namespace NodeEditor
     {
         // AbsoluteRect is set by UpdateLayout; use it
         return AbsoluteRect;
-    }
-
-    void GraphNode::SyncPositionFromGraph(const GraphView* view)
-    {
-        if (!view) return;
-        // compute screen position and set Position so UpdateLayout makes AbsoluteRect correct
-        ImVec2 screen = view->GraphToScreen(GraphPos);
-        // Position is relative to parent (GraphView's AbsoluteRect.Min). We'll set Position accordingly
-        Position = screen - GetParent()->GetAbsoluteRect().Min;
-        Size = NodeSize;
     }
 
     // Drawing uses AbsoluteRect (screen)
@@ -163,9 +170,6 @@ namespace NodeEditor
                 ImVec2 screenTopLeft = e.MousePos - DragOffset;
                 ImVec2 newGraphPos = gv->ScreenToGraph(screenTopLeft);
                 GraphPos = newGraphPos;
-
-                // update Position/AbsoluteRect for immediate visual feedback
-                SyncPositionFromGraph(gv);
                 return true;
             }
         }
