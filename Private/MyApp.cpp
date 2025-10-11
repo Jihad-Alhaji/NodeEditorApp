@@ -4,7 +4,7 @@
 #include"Widget.h"
 #include"UIManager.h"
 #include<ArcLog/LogSystem.h>
-#include"GraphView.h"
+#include"NGEditor.h"
 
 bool MyApp::Init()
 {
@@ -26,18 +26,10 @@ bool MyApp::Init()
     mUIRoot = std::make_shared<UIManager>(Vec2( m_WinWidth, m_WinHeight ));
 
 	{
-		auto g = std::make_shared<NodeEditor::GraphView>();
+		auto g = std::make_shared<NodeEditor::NGEditor>("Bleuprint");
 		g->SetAlignment(EAlign::Center, EAlign::Center);
+		g->SetSize({ 1080,720 });
 		mUIRoot->AddRootWidget(g);
-		auto n = std::make_shared<NodeEditor::GraphNode>("test 1", ImVec2{ 0,0 });
-		n->AddPin(NodeEditor::EPinType::Input, "in");
-		n->AddPin(NodeEditor::EPinType::Output, "out");
-		g->AddNode(n);
-
-		auto b = std::make_shared<NodeEditor::GraphNode>("test 1", ImVec2{ 100,0 });
-		b->AddPin(NodeEditor::EPinType::Input, "in");
-		b->AddPin(NodeEditor::EPinType::Output, "out");
-		g->AddNode(b);
 	}
 	return true;
 }

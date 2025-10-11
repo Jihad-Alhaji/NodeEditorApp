@@ -2,6 +2,7 @@
 #include"ArcApp.h"
 #include<ArcRx/ImageManager.h>
 #include<ArcLog/LogSystem.h>
+
 namespace NodeEditor
 {
 
@@ -63,8 +64,26 @@ namespace NodeEditor
         DrawConnections();
         DrawNodes();
 
+        //handle context menu
+        if (ImGui::BeginPopupContextWindow("GraphMenu"))
+        {
+            DrawContextMenu();
+            ImGui::EndPopup();
+        }
         ImGui::EndChild();
         ImGui::PopID();
+    }
+
+    void GraphView::DrawContextMenu()
+    {
+        //TODO: add here commands to spawn relevent nodes
+        if (ImGui::Selectable("Spawn node"))
+        {
+            auto n = std::make_shared<GraphNode>("Demo", ScreenToGraph(ImGui::GetMousePos()));
+            n->AddPin(EPinType::Input, "in");
+            n->AddPin(EPinType::Output, "out");
+            AddNode(n);
+        }
     }
 
     void GraphView::DrawNodes()
@@ -165,6 +184,11 @@ namespace NodeEditor
 
     bool GraphView::OnMouseClick(WidgetEvent& e)
     {
+        if (e.Key == ImGuiMouseButton_Right)
+        {
+            ImGui::OpenPopup("GraphMenu");
+            return true;
+        }
         return false;
     }
 

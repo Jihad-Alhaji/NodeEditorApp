@@ -34,7 +34,15 @@
     <ClCompile Include="Private\GraphNode.cpp">
       <Filter>Private</Filter>
     </ClCompile>
-    <ClCompile Include="Private\UI_VerticalBox.cpp" />
+    <ClCompile Include="Private\UI_VerticalBox.cpp">
+      <Filter>Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\NGEditor.cpp">
+      <Filter>Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\UI_HorizontalBox.cpp">
+      <Filter>Private</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AppConfig.config">
@@ -61,6 +69,12 @@
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\UI_VerticalBox.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\NGEditor.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\UI_HorizontalBox.h">
       <Filter>Public</Filter>
     </ClInclude>
   </ItemGroup>

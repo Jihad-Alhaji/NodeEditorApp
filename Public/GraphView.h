@@ -16,6 +16,7 @@ namespace NodeEditor
         virtual void Tick(double DeltaTime) override;
         virtual void Draw() override;
         
+        virtual void DrawContextMenu();
         // coordinate conversion
         ImVec2 ScreenToGraph(const ImVec2& screenPos) const;
         ImVec2 GraphToScreen(const ImVec2& graphPos) const;

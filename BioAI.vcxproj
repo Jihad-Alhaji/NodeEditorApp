@@ -158,8 +158,10 @@
     <ClCompile Include="Private\GraphNode.cpp" />
     <ClCompile Include="Private\GraphView.cpp" />
     <ClCompile Include="Private\MyApp.cpp" />
+    <ClCompile Include="Private\NGEditor.cpp" />
     <ClCompile Include="Private\Source.cpp" />
     <ClCompile Include="Private\UIManager.cpp" />
+    <ClCompile Include="Private\UI_HorizontalBox.cpp" />
     <ClCompile Include="Private\UI_VerticalBox.cpp" />
     <ClCompile Include="Private\Widget.cpp" />
   </ItemGroup>
@@ -171,7 +173,9 @@
     <ClInclude Include="Public\GraphNode.h" />
     <ClInclude Include="Public\GraphView.h" />
     <ClInclude Include="Public\MyApp.h" />
+    <ClInclude Include="Public\NGEditor.h" />
     <ClInclude Include="Public\UIManager.h" />
+    <ClInclude Include="Public\UI_HorizontalBox.h" />
     <ClInclude Include="Public\UI_VerticalBox.h" />
     <ClInclude Include="Public\Widget.h" />
   </ItemGroup>
