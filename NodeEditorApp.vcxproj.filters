@@ -43,6 +43,12 @@
     <ClCompile Include="Private\UI_HorizontalBox.cpp">
       <Filter>Private</Filter>
     </ClCompile>
+    <ClCompile Include="Private\NodeEditorRegistery.cpp">
+      <Filter>Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Private\BlueprintGraph.cpp">
+      <Filter>Private</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AppConfig.config">
@@ -75,6 +81,15 @@
       <Filter>Public</Filter>
     </ClInclude>
     <ClInclude Include="Public\UI_HorizontalBox.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\NodeEditorRegistery.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\NodeGraphFactories.h">
+      <Filter>Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Public\BlueprintGraph.h">
       <Filter>Public</Filter>
     </ClInclude>
   </ItemGroup>

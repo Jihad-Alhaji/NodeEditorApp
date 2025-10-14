@@ -7,8 +7,6 @@
 
 namespace NodeEditor
 {
-
-
 class GraphView; 
 
 enum class EPinType { Input, Output };
@@ -16,16 +14,18 @@ enum class EPinType { Input, Output };
 class GraphPin : public Widget, public std::enable_shared_from_this<GraphPin>
 {
 public:
-    EPinType Type;
+    EPinType Type = EPinType::Input;
 
     // weak backref to owning node
     std::weak_ptr<class GraphNode> ParentNode;
 
-    GraphPin(std::shared_ptr<class GraphNode> parentNode, EPinType pinType, std::string pinName);
+    GraphPin();
 
     void Draw()override;
 
     bool OnRecieveDrop(WidgetEvent& e) override;
+
+    void SetName(std::string pinName) { Name = std::move(pinName); };
 };
 
 struct GraphConnection
@@ -44,7 +44,7 @@ public:
     std::vector<std::shared_ptr<GraphPin>> Inputs;
     std::vector<std::shared_ptr<GraphPin>> Outputs;
 
-    GraphNode(const std::string& title, const ImVec2& graphPos);
+    GraphNode(const std::string& title);
 
     //custom layout based on graph layout
     void UpdateLayout(const Rect& ParentRect)override;
@@ -58,7 +58,7 @@ public:
     inline class GraphView* GetGraph()const;
 
     // convenience to add pins
-    std::shared_ptr<GraphPin> AddPin(EPinType type, const std::string& name);
+    void AddPin(std::shared_ptr<GraphPin> pin);
 
 protected:
     std::shared_ptr<UI_VerticalBox> VB_InPins;

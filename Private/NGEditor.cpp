@@ -5,11 +5,12 @@
 
 namespace NodeEditor
 {
-	NGEditor::NGEditor(std::string GraphName):Widget(GraphName)
+	NGEditor::NGEditor(std::shared_ptr<GraphView> EditedGraph):Widget("")
 	{
+		Graph = EditedGraph;
+		Name = Graph->GetName() + " Editor";
 		HB_Main = std::make_shared<UI_HorizontalBox>();
 		
-		Graph = std::make_shared<GraphView>();
 		HB_Main->AddChild(Graph);
 
 		VB_Details = std::make_shared<UI_VerticalBox>();

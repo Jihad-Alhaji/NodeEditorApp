@@ -155,10 +155,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Private\BlueprintGraph.cpp" />
     <ClCompile Include="Private\GraphNode.cpp" />
     <ClCompile Include="Private\GraphView.cpp" />
     <ClCompile Include="Private\MyApp.cpp" />
     <ClCompile Include="Private\NGEditor.cpp" />
+    <ClCompile Include="Private\NodeEditorRegistery.cpp" />
     <ClCompile Include="Private\Source.cpp" />
     <ClCompile Include="Private\UIManager.cpp" />
     <ClCompile Include="Private\UI_HorizontalBox.cpp" />
@@ -170,10 +172,13 @@
     <None Include="Resources\Scripts\main.lua" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Public\BlueprintGraph.h" />
     <ClInclude Include="Public\GraphNode.h" />
     <ClInclude Include="Public\GraphView.h" />
     <ClInclude Include="Public\MyApp.h" />
     <ClInclude Include="Public\NGEditor.h" />
+    <ClInclude Include="Public\NodeEditorRegistery.h" />
+    <ClInclude Include="Public\NodeGraphFactories.h" />
     <ClInclude Include="Public\UIManager.h" />
     <ClInclude Include="Public\UI_HorizontalBox.h" />
     <ClInclude Include="Public\UI_VerticalBox.h" />

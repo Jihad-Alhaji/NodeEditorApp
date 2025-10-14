@@ -3,10 +3,8 @@
 #include<ArcLog/LogSystem.h>
 namespace NodeEditor
 {
-    GraphPin::GraphPin(std::shared_ptr<class GraphNode> parentNode, EPinType pinType, std::string pinName) :Widget(std::move(pinName))
+    GraphPin::GraphPin() :Widget("pin")
     {
-        Type = pinType;
-        ParentNode = parentNode;
         bTickAllowed = false;
         Size = { 16,16 };
         HorizontalAlign = EAlign::Center;
@@ -56,8 +54,8 @@ namespace NodeEditor
         return false;
     }
 
-    GraphNode::GraphNode(const std::string& title, const ImVec2& graphPos)
-        : Widget("GraphNode"), Title(title), GraphPos(graphPos)
+    GraphNode::GraphNode(const std::string& title)
+        : Widget("GraphNode"), Title(title)
     {
         Size = NodeSize;
         bTickAllowed = false;
@@ -95,23 +93,26 @@ namespace NodeEditor
         }
     }
 
-    std::shared_ptr<GraphPin> GraphNode::AddPin(EPinType type, const std::string& name)
-    {
-        auto p = std::make_shared<GraphPin>(shared_from_this(),type , name);
-        if (type == EPinType::Input)
-        {
-            VB_InPins->AddChild(p);
-        }
-        else
-        {
-            VB_OutPins->AddChild(p);
-        }
-        return p;
-    }
-    
     GraphView* GraphNode::GetGraph() const
     {
         return dynamic_cast<GraphView*>(Parent);
+    }
+
+    void GraphNode::AddPin(std::shared_ptr<GraphPin> pin)
+    {
+        if (!pin)
+            return;
+        pin->ParentNode = shared_from_this();
+        if (pin->Type == EPinType::Input)
+        {
+            VB_InPins->AddChild(pin);
+            Inputs.emplace_back(std::move(pin));
+        }
+        else
+        {
+            VB_OutPins->AddChild(pin);
+            Outputs.emplace_back(std::move(pin));
+        }
     }
     
     void GraphNode::Draw()

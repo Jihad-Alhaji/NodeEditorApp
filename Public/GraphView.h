@@ -12,11 +12,9 @@ namespace NodeEditor
     public:
         GraphView();
 
-        virtual void Construct() override;
-        virtual void Tick(double DeltaTime) override;
         virtual void Draw() override;
-        
-        virtual void DrawContextMenu();
+       
+
         // coordinate conversion
         ImVec2 ScreenToGraph(const ImVec2& screenPos) const;
         ImVec2 GraphToScreen(const ImVec2& graphPos) const;
@@ -24,11 +22,6 @@ namespace NodeEditor
         // nodes & connections management
         void AddNode(std::shared_ptr<GraphNode> node);
         void AddConnection(const GraphConnection& conn);
-
-        // link dragging API for nodes to call
-        //void BeginLinkFromPin(std::shared_ptr<GraphPin> pin);
-        //void UpdateLinkDrag(const ImVec2& mouseScreenPos);
-        //void TryCompleteLink(std::shared_ptr<GraphPin> targetPin);
 
         //node dragging logic
         void BeginDragNode(std::shared_ptr<GraphNode> n);
@@ -60,5 +53,9 @@ namespace NodeEditor
         void DrawConnections();
         void DrawNodes();
         ImVec2 GetCanvasOrigin() const;
+
+
+        virtual void DrawConnection(const GraphConnection& con);
+        virtual void DrawContextMenu();
     };
 }

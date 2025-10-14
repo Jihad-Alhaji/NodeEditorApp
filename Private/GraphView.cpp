@@ -16,16 +16,8 @@ namespace NodeEditor
         ScrollOffset = { 0, 0 };
         Zoom = 1.f;
         ZoomRange = { 0.6f, 1.8f };
-        bTickAllowed = true;
+        bTickAllowed = false;
         BGTextureTileing = 4;
-    }
-
-    void GraphView::Construct()
-    {
-    }
-
-    void GraphView::Tick(double DeltaTime)
-    {
     }
 
     void GraphView::AddNode(std::shared_ptr<GraphNode> node)
@@ -76,14 +68,7 @@ namespace NodeEditor
 
     void GraphView::DrawContextMenu()
     {
-        //TODO: add here commands to spawn relevent nodes
-        if (ImGui::Selectable("Spawn node"))
-        {
-            auto n = std::make_shared<GraphNode>("Demo", ScreenToGraph(ImGui::GetMousePos()));
-            n->AddPin(EPinType::Input, "in");
-            n->AddPin(EPinType::Output, "out");
-            AddNode(n);
-        }
+       //here add graph specific commands
     }
 
     void GraphView::DrawNodes()
@@ -98,18 +83,23 @@ namespace NodeEditor
 
     void GraphView::DrawConnections()
     {
-        ImDrawList* dl = ImGui::GetWindowDrawList();
         for (auto& conn : Connections)
         {
-            auto f = conn.From.lock();
-            auto t = conn.To.lock();
-            if (!f || !t) continue;
-            ImVec2 p1 = f->GetAbsoluteRect().Center();
-            ImVec2 p2 = t->GetAbsoluteRect().Center();
-            ImVec2 c1 = ImVec2(p1.x + 60.0f, p1.y);
-            ImVec2 c2 = ImVec2(p2.x - 60.0f, p2.y);
-            dl->AddBezierCubic(p1, c1, c2, p2, IM_COL32(120, 160, 255, 255), 3.0f);
+            DrawConnection(conn);
         }
+    }
+
+    void GraphView::DrawConnection(const GraphConnection& conn)
+    {
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        auto f = conn.From.lock();
+        auto t = conn.To.lock();
+        if (!f || !t) return;
+        ImVec2 p1 = f->GetAbsoluteRect().Center();
+        ImVec2 p2 = t->GetAbsoluteRect().Center();
+        ImVec2 c1 = ImVec2(p1.x + 60.0f, p1.y);
+        ImVec2 c2 = ImVec2(p2.x - 60.0f, p2.y);
+        dl->AddBezierCubic(p1, c1, c2, p2, IM_COL32(120, 160, 255, 255), 3.0f);
     }
 
     void GraphView::DrawBackgroundGrid()

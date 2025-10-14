@@ -5,6 +5,9 @@
 #include"UIManager.h"
 #include<ArcLog/LogSystem.h>
 #include"NGEditor.h"
+#include"NodeEditorRegistery.h"
+#include"BlueprintGraph.h"
+
 
 bool MyApp::Init()
 {
@@ -24,9 +27,13 @@ bool MyApp::Init()
 	Lua().script_file(GetResourcesDir() + "Scripts/main.lua");
 
     mUIRoot = std::make_shared<UIManager>(Vec2( m_WinWidth, m_WinHeight ));
-
+	
+	NodeEditorRegistery::Initialize();
+	//Debug test registerations
+	RegisterBlueprintGraph();
 	{
-		auto g = std::make_shared<NodeEditor::NGEditor>("Bleuprint");
+		
+		auto g = std::make_shared<NodeEditor::NGEditor>(NodeEditorRegistery::Get()->SpawnGraph("Blueprint"));
 		g->SetAlignment(EAlign::Center, EAlign::Center);
 		g->SetSize({ 1080,720 });
 		mUIRoot->AddRootWidget(g);

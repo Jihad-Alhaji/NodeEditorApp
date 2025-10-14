@@ -33,5 +33,6 @@ void UI_VerticalBox::UpdateLayout(const Rect& ParentRect)
 		}
 	}
 	
+	
 	Widget::UpdateLayout(ParentRect);
 }

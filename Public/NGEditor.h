@@ -7,7 +7,7 @@ namespace NodeEditor
 	class NGEditor : public Widget
 	{
     public:
-        NGEditor(std::string GraphName);
+        NGEditor(std::shared_ptr<GraphView> EditedGraph);
         //virtual void Construct();
         //virtual void Destruct();
 
@@ -19,10 +19,10 @@ namespace NodeEditor
 
     protected:
         
-        std::shared_ptr<Widget> HB_Main;
-        std::shared_ptr<GraphView> Graph;
-        std::shared_ptr<Widget> VB_Details;
+        std::shared_ptr<Widget> HB_Main;//main horizontal box
+        std::shared_ptr<GraphView> Graph;//edited graph
+        std::shared_ptr<Widget> VB_Details;//details vertical box
 
-        float UI_MainPanelSplit = 0.7;
+        float UI_MainPanelSplit = 0.7;//main hor box split ratio
 	};
 }
