@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include"GraphNode.h"
+#include<ArcCore/Structures/Delegate.h>
+
 namespace NodeEditor
 {
 
@@ -34,6 +36,9 @@ namespace NodeEditor
         bool OnMouseMove(WidgetEvent& e)override;
 
         inline float GetZoom()const { return Zoom; }
+
+        void SetFocusedNode(std::weak_ptr<GraphNode> n);
+        Structures::TMultiDelegate<std::weak_ptr<GraphNode>> OnFocusedNodeChanged;
     protected:
         // original fields
         std::shared_ptr<Graphics::SimpleTexture> Tex_BG;
@@ -48,6 +53,7 @@ namespace NodeEditor
 
         std::shared_ptr<GraphNode> DraggedNode;
 
+        std::weak_ptr<GraphNode> FocusedNode;
         // drawing helpers
         void DrawBackgroundGrid();
         void DrawConnections();

@@ -13,9 +13,17 @@ namespace NodeEditor
     }
     void GraphPin::Draw()
     {
+        ImGui::PushID(this);
         ImDrawList* dl = ImGui::GetWindowDrawList();
         ImVec2 center = AbsoluteRect.Center();
         float  radius = 8;
+        ImGui::SetCursorScreenPos(AbsoluteRect.Min);
+        ImGui::InvisibleButton("btn", AbsoluteRect.Size());//hit box 
+        if (ImGui::BeginPopupContextItem("PinCtxMenu"))
+        {
+            DrawContextMenu();
+            ImGui::EndPopup();
+        }
         dl->AddCircleFilled(center, radius, IM_COL32(20, 220, 210, 220));
         if (bHovered)
         {
@@ -30,6 +38,12 @@ namespace NodeEditor
            
             dl->AddBezierCubic(center, {center.x + offset,center.y}, { mPos.x - offset,mPos.y }, mPos, IM_COL32(20, 220, 210, 220), 5.f);
         }
+        ImGui::PopID();
+    }
+   
+    void GraphPin::DrawContextMenu()
+    {
+        ImGui::Text("pin ctx menu");
     }
 
     bool GraphPin::OnRecieveDrop(WidgetEvent& e)
@@ -117,14 +131,22 @@ namespace NodeEditor
     
     void GraphNode::Draw()
     {
+        ImGui::PushID(this);
+       
         ImDrawList* dl = ImGui::GetWindowDrawList();
         ImVec2 a = AbsoluteRect.Min;
         ImVec2 b = AbsoluteRect.Max;
-
+        
         //padding so pins appear outside a little
         a.x += 8;
         b.x -= 8;
-
+        ImGui::SetCursorScreenPos(a);
+        ImGui::InvisibleButton("btn", b-a);//hit box 
+        if (ImGui::BeginPopupContextItem("NodeCtxMenu"))
+        {
+            DrawContextMenu();
+            ImGui::EndPopup();
+        }
         // Node background
         dl->AddRectFilled(a, b, IM_COL32(60, 60, 60, 220), 6.0f);
         
@@ -144,8 +166,17 @@ namespace NodeEditor
         }
         //draws children including pins
         Widget::Draw();
+        
+       
+       
+        ImGui::PopID();
+        
     }
 
+    void GraphNode::DrawContextMenu()
+    {
+        ImGui::Text("node ctx menu");
+    }
     bool GraphNode::OnMouseClick(WidgetEvent& e)
     {
         // left click: start node drag if clicked in header area
@@ -163,8 +194,6 @@ namespace NodeEditor
 
             return true;
         }
-
-        // right click could be context menu - ignore here
         return false;
     }
 
@@ -176,5 +205,15 @@ namespace NodeEditor
     bool GraphNode::OnMouseMove(WidgetEvent& e)
     {
         return false;
+    }
+    bool GraphNode::OnFocusGained(WidgetEvent& Even)
+    {
+        auto g = GetGraph();
+        if (!g)
+        {
+            return false;
+        }
+        g->SetFocusedNode(shared_from_this());
+        return true;
     }
 }

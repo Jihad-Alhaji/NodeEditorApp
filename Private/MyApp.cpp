@@ -28,11 +28,13 @@ bool MyApp::Init()
 
     mUIRoot = std::make_shared<UIManager>(Vec2( m_WinWidth, m_WinHeight ));
 	
+	//initialize node editor registary
 	NodeEditorRegistery::Initialize();
-	//Debug test registerations
+	//initialize blueprint graphs
 	RegisterBlueprintGraph();
+
+	//create a blueprint graph editor
 	{
-		
 		auto g = std::make_shared<NodeEditor::NGEditor>(NodeEditorRegistery::Get()->SpawnGraph("Blueprint"));
 		g->SetAlignment(EAlign::Center, EAlign::Center);
 		g->SetSize({ 1080,720 });
@@ -49,7 +51,7 @@ void MyApp::Draw(double dt)
     auto s = ImGui::GetWindowSize() + p;
     mUIRoot->SetViewRect({ p, s });
     mUIRoot->UpdateLayout();
-
+	mUIRoot->HandleEvents();
 	mUIRoot->Draw();
 }
 
@@ -57,5 +59,5 @@ void MyApp::Tick(double dt)
 {
 	ArcApp::Tick(dt);
 	mUIRoot->Tick(dt);
-	mUIRoot->HandleEvents();
+	
 }

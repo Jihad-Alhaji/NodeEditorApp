@@ -1,6 +1,7 @@
 #include "BlueprintGraph.h"
 #include"NodeEditorRegistery.h"
 #include<imgui/imgui.h>
+
 BlueprintGraph::BlueprintGraph()
 {
 	Name = "Blueprint";
@@ -24,31 +25,26 @@ void BlueprintGraph::DrawContextMenu()
 	}
 }
 
-std::shared_ptr<NodeEditor::GraphView> BlueprintGraph_Factory::Create(NodeEditorRegistery* Registery) const
+
+BlueprintNode::BlueprintNode() :NodeEditor::GraphNode("")
 {
-	auto g = std::make_shared<BlueprintGraph>();
-	return g;
 }
 
-void RegisterBlueprintGraph()
+bool BlueprintNode::Execute()
 {
-	auto reg = NodeEditorRegistery::Get();
-	reg->RegisterGraph("Blueprint", std::make_shared<BlueprintGraph_Factory>());
-
-	auto d1 = std::make_shared<BlueprintNode_Factory>();
-	d1->Title = "default node";
-	d1->Inputs.push_back({ "default","in" });
-	d1->Outputs.push_back({ "default","out" });
-	reg->RegisterNode("Blueprint", "default", std::move(d1));
-
-	reg->RegisterPin("default", std::make_shared<BlueprintPin_Default_Factory>());
-
+	if (!Function)
+	{
+		return false;
+	}
+	return Function(Inputs, Outputs);
 }
 
 std::shared_ptr<NodeEditor::GraphNode> BlueprintNode_Factory::Create(NodeEditorRegistery* Registery) const
 {
-	auto n = std::make_shared<NodeEditor::GraphNode>(Title);
-	
+	auto n = std::make_shared<BlueprintNode>();
+
+	n->Title = Title;
+	//spawn pins
 	for (auto& i : Inputs) {
 		auto p = Registery->SpawnPin(i.Factory);
 		if (p)
@@ -68,10 +64,29 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintNode_Factory::Create(NodeEditorR
 			n->AddPin(std::move(p));
 		}
 	}
+	n->Function = Function;
 	return n;
 }
+
 
 std::shared_ptr<NodeEditor::GraphPin> BlueprintPin_Default_Factory::Create(NodeEditorRegistery* Registery) const
 {
 	return std::make_shared<NodeEditor::GraphPin>();
+}
+
+
+
+void RegisterBlueprintGraph()
+{
+	auto reg = NodeEditorRegistery::Get();
+	reg->RegisterGraph("Blueprint", std::make_shared<BlueprintGraph_Factory>());
+
+	auto d1 = std::make_shared<BlueprintNode_Factory>();
+	d1->Title = "default node";
+	d1->Inputs.push_back({ "default","in" });
+	d1->Outputs.push_back({ "default","out" });
+	reg->RegisterNode("Blueprint", "default", std::move(d1));
+
+	reg->RegisterPin("default", std::make_shared<BlueprintPin_Default_Factory>());
+
 }

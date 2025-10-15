@@ -48,22 +48,31 @@ namespace NodeEditor
 
     void GraphView::Draw()
     {
+        //handle context menu
+       
         ImGui::PushID(this);
+       
         ImGui::SetCursorScreenPos(AbsoluteRect.Min + Position);
-        if (!ImGui::BeginChild("GraphView", Size, ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))return;
+        if (!ImGui::BeginChild("GraphView", Size, ImGuiChildFlags_FrameStyle, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+        {
+            ImGui::PopID();
+            return;
+        }
 
         DrawBackgroundGrid();
         DrawConnections();
         DrawNodes();
 
-        //handle context menu
-        if (ImGui::BeginPopupContextWindow("GraphMenu"))
+        if (ImGui::BeginPopupContextWindow("GraphCtxMenu",ImGuiPopupFlags_NoOpenOverExistingPopup | ImGuiPopupFlags_MouseButtonDefault_))
         {
             DrawContextMenu();
             ImGui::EndPopup();
         }
         ImGui::EndChild();
+       
         ImGui::PopID();
+       
+       
     }
 
     void GraphView::DrawContextMenu()
@@ -172,13 +181,15 @@ namespace NodeEditor
         return false;
     }
 
+    void GraphView::SetFocusedNode(std::weak_ptr<GraphNode> n)
+    {
+        FocusedNode = n;
+        //TODO: check for actual change before broadcasting
+        OnFocusedNodeChanged(std::move(n));
+    }
+
     bool GraphView::OnMouseClick(WidgetEvent& e)
     {
-        if (e.Key == ImGuiMouseButton_Right)
-        {
-            ImGui::OpenPopup("GraphMenu");
-            return true;
-        }
         return false;
     }
 

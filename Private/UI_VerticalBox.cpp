@@ -22,17 +22,20 @@ void UI_VerticalBox::RemoveChildAt(size_t index)
 
 void UI_VerticalBox::UpdateLayout(const Rect& ParentRect)
 {
-	//if auto size, then we resize to content accomulated size
+	for (size_t i = 1; i < Children.size(); i++)
+	{
+		auto ThisChild = Children[i];
+		auto PrevChil = Children[i - 1];
+		
+		ThisChild->SetPosition(ImVec2{ ThisChild->GetPosition().x,PrevChil->GetPosition().y + PrevChil->GetSize().y});
+	}
 	if (bAutoSize)
 	{
-		Size = {};
-		for (auto& c : Children) {
-			ImVec2 cSize = c->GetSize();
-			Size.x = std::max(Size.x, cSize.x);
-			Size.y += cSize.y;
+		if (!Children.empty())
+		{
+			auto min = Children[0]->GetAbsoluteRect().Min;
+			Size = Children.back()->GetAbsoluteRect().Max - min;
 		}
 	}
-	
-	
 	Widget::UpdateLayout(ParentRect);
 }

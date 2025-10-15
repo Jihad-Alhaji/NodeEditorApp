@@ -22,7 +22,7 @@ public:
     GraphPin();
 
     void Draw()override;
-
+    virtual void DrawContextMenu();
     bool OnRecieveDrop(WidgetEvent& e) override;
 
     void SetName(std::string pinName) { Name = std::move(pinName); };
@@ -49,17 +49,21 @@ public:
     //custom layout based on graph layout
     void UpdateLayout(const Rect& ParentRect)override;
 
+    virtual void DrawContextMenu();
+
     // widget overrides
     virtual void Draw() override;
     virtual bool OnMouseClick(WidgetEvent& e) override;
     virtual bool OnMouseRelease(WidgetEvent& e) override;
     virtual bool OnMouseMove(WidgetEvent& e) override;
+    virtual bool OnFocusGained(WidgetEvent& Even)override;//TODO: notify graph that this node is focused
 
     inline class GraphView* GetGraph()const;
 
     // convenience to add pins
     void AddPin(std::shared_ptr<GraphPin> pin);
 
+    
 protected:
     std::shared_ptr<UI_VerticalBox> VB_InPins;
     std::shared_ptr<UI_VerticalBox> VB_OutPins;
