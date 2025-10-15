@@ -4,6 +4,7 @@ Hello everyone!
 This project aims to create a **flexible**, **customizable**, and **reusable visual scripting editor**.  
 It is built on top of a private framework I’m actively developing called **ARC-SDK** — an **event-driven modular application framework**.
 
+![Screenshot](Docs/Graphview.png)
 ---
 
 ## 🎯 Goals
