@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 #include"GraphNode.h"
-#include<ArcCore/Structures/Delegate.h>
-
+#include<Structures/Delegate.h>
+#include<Event.h>
 namespace NodeEditor
 {
 
@@ -15,7 +15,7 @@ namespace NodeEditor
         GraphView();
 
         virtual void Draw() override;
-       
+        virtual void Tick(double dt)override;
 
         // coordinate conversion
         ImVec2 ScreenToGraph(const ImVec2& screenPos) const;
@@ -23,7 +23,10 @@ namespace NodeEditor
 
         // nodes & connections management
         void AddNode(std::shared_ptr<GraphNode> node);
-        void AddConnection(const GraphConnection& conn);
+        void RemoveNode(size_t id);
+
+        void AddConnection(std::shared_ptr<GraphConnection>&& conn);
+        void RemoveConnection(size_t connId);
 
         //node dragging logic
         void BeginDragNode(std::shared_ptr<GraphNode> n);
@@ -39,6 +42,10 @@ namespace NodeEditor
 
         void SetFocusedNode(std::weak_ptr<GraphNode> n);
         Structures::TMultiDelegate<std::weak_ptr<GraphNode>> OnFocusedNodeChanged;
+
+        void PushEvent(ARC::Event&& e);
+
+        
     protected:
         // original fields
         std::shared_ptr<Graphics::SimpleTexture> Tex_BG;
@@ -47,13 +54,19 @@ namespace NodeEditor
         float Zoom;
         float BGTextureTileing;
 
-        // nodes and connections
-        std::vector<std::shared_ptr<GraphNode>> Nodes;
-        std::vector<GraphConnection> Connections;
+        size_t NodeIdCounter = 0;
 
+        // nodes and connections
+        std::unordered_map<size_t, std::shared_ptr<GraphNode>> Nodes;
+        
+        std::unordered_map<size_t,std::shared_ptr<GraphConnection>> Connections;
+     
         std::shared_ptr<GraphNode> DraggedNode;
 
         std::weak_ptr<GraphNode> FocusedNode;
+
+        ARC::EventDispatcher mEventDispatcher;
+
         // drawing helpers
         void DrawBackgroundGrid();
         void DrawConnections();

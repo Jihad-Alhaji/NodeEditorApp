@@ -17,6 +17,8 @@ namespace NodeEditor
 		HB_Main->AddChild(VB_Details);
 
 		AddChild(HB_Main);
+
+		bTickAllowed = true;
 	}
 	void NGEditor::Draw()
 	{

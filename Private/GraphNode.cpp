@@ -1,8 +1,39 @@
 #include "GraphNode.h"
 #include "GraphView.h" 
 #include<ArcLog/LogSystem.h>
+#include<Hash.h>
 namespace NodeEditor
 {
+    GraphConnection::GraphConnection(std::shared_ptr<GraphPin> from, std::shared_ptr<GraphPin> to) :
+        From{ from }, To{ to }
+    {
+        ConnectionId = from->ParentNode.lock()->NodeId;
+        hash_combine(ConnectionId, from->PinId, to->ParentNode.lock()->NodeId, to->PinId);
+    }
+  
+    void GraphConnection::Connect()
+    {
+        auto f = From.lock();
+        auto t = To.lock();
+        if (f && t)
+        {
+            auto ref = shared_from_this();
+            f->Connections[ConnectionId] = ref;
+            t->Connections[ConnectionId] = ref;
+        }
+    }
+
+    void GraphConnection::Disconnect()
+    {
+        auto f = From.lock();
+        auto t = To.lock();
+        if (f && t)
+        {
+            f->Connections.erase(ConnectionId);
+            t->Connections.erase(ConnectionId);
+        }
+    }
+
     GraphPin::GraphPin() :Widget("pin")
     {
         bTickAllowed = false;
@@ -43,7 +74,10 @@ namespace NodeEditor
    
     void GraphPin::DrawContextMenu()
     {
-        ImGui::Text("pin ctx menu");
+        if (ImGui::Selectable("Disconnect"))
+        {
+            DisconnectAll();
+        }
     }
 
     bool GraphPin::OnRecieveDrop(WidgetEvent& e)
@@ -53,19 +87,37 @@ namespace NodeEditor
         if (inPin && inPin != this && inPin->Type != Type && ParentNode.lock() != inPin->ParentNode.lock())
         {
             GraphView* g = ParentNode.lock()->GetGraph();
+
             //always make connects from an output pin to an input pin
+            std::shared_ptr<GraphConnection> conn{};
             if (Type == EPinType::Input)
             {
-                g->AddConnection({ inPin->shared_from_this() , shared_from_this() });
+                conn = std::make_shared<GraphConnection>(inPin->shared_from_this(), shared_from_this());
             }
             else
             {
-                g->AddConnection({ shared_from_this(),inPin->shared_from_this() });
+                conn = std::make_shared<GraphConnection>(shared_from_this() , inPin->shared_from_this());
             }
-           
+
+            //add connection to graph
+            g->AddConnection(std::move(conn));
             return true;
         }
         return false;
+    }
+
+    void GraphPin::DisconnectAll()
+    {
+        if (!IsConnected())
+        {
+            return;
+        }
+        auto g = ParentNode.lock()->GetGraph();
+        //this safely loops until all connections has be removed
+        auto oldConns = std::move(Connections);
+        for (const auto& [id,conn] : oldConns) {
+            g->RemoveConnection(id);
+        }
     }
 
     GraphNode::GraphNode(const std::string& title)
@@ -120,11 +172,13 @@ namespace NodeEditor
         if (pin->Type == EPinType::Input)
         {
             VB_InPins->AddChild(pin);
+            pin->PinId = static_cast<uint32_t>(Inputs.size());
             Inputs.emplace_back(std::move(pin));
         }
         else
         {
             VB_OutPins->AddChild(pin);
+            pin->PinId = static_cast<uint32_t>(Outputs.size());
             Outputs.emplace_back(std::move(pin));
         }
     }
@@ -175,8 +229,40 @@ namespace NodeEditor
 
     void GraphNode::DrawContextMenu()
     {
-        ImGui::Text("node ctx menu");
+        if (ImGui::Selectable("Delete"))
+        {
+            DeleteNode();
+        }
+        if (ImGui::Selectable("Dublicate"))
+        {
+            DublicateNode();
+        }
+        if (ImGui::Selectable("Disconnect"))
+        {
+            DisconnectAll();
+        }
     }
+
+    void GraphNode::DisconnectAll()
+    {
+        auto g = GetGraph();
+        for (auto& pin : Inputs) {
+            pin->DisconnectAll();
+        }
+        for (auto& pin : Outputs) {
+            pin->DisconnectAll();
+        }
+    }
+
+    void GraphNode::DeleteNode()
+    {
+        GetGraph()->RemoveNode(NodeId);
+    }
+
+    void GraphNode::DublicateNode()
+    {
+    }
+
     bool GraphNode::OnMouseClick(WidgetEvent& e)
     {
         // left click: start node drag if clicked in header area
@@ -216,4 +302,5 @@ namespace NodeEditor
         g->SetFocusedNode(shared_from_this());
         return true;
     }
+    
 }

@@ -2,7 +2,8 @@
 #include"ArcApp.h"
 #include<ArcRx/ImageManager.h>
 #include<ArcLog/LogSystem.h>
-
+#include<Hash.h>
+#include<chrono>
 namespace NodeEditor
 {
 
@@ -16,19 +17,56 @@ namespace NodeEditor
         ScrollOffset = { 0, 0 };
         Zoom = 1.f;
         ZoomRange = { 0.6f, 1.8f };
-        bTickAllowed = false;
         BGTextureTileing = 4;
+        bTickAllowed = true;
     }
 
     void GraphView::AddNode(std::shared_ptr<GraphNode> node)
     {
-        Nodes.push_back(node);
-        AddChild(node); // so FindWidgetAt works via widget tree
+        if (!node)
+        {
+            return;
+        }
+
+        node->NodeId = std::chrono::duration_cast<std::chrono::milliseconds>( std::chrono::system_clock::now().time_since_epoch() ).count();
+        hash_combine(node->NodeId, ++NodeIdCounter);
+
+        Nodes[node->NodeId] = node;
+        AddChild(node); 
     }
 
-    void GraphView::AddConnection(const GraphConnection& conn)
+    void GraphView::RemoveNode(size_t id)
     {
-        Connections.push_back(conn);
+        auto n = Nodes.find(id);
+        if (n != Nodes.end())
+        {
+            n->second->DisconnectAll();
+            PushEvent({ [this,id] {
+                Nodes.erase(id); 
+            } });
+        }
+    }
+
+    void GraphView::AddConnection(std::shared_ptr<GraphConnection>&& conn)
+    {
+        if (!conn)
+        {
+            return;
+        }
+        conn->Connect();
+        Connections[conn->ConnectionId] = std::move(conn);
+    }
+
+    void GraphView::RemoveConnection(size_t connId)
+    {
+        auto iter = Connections.find(connId);
+        if (iter == Connections.end())
+        {
+            return;
+        }
+
+        iter->second->Disconnect();
+        Connections.erase(iter);
     }
 
     ImVec2 GraphView::ScreenToGraph(const ImVec2& screenPos) const
@@ -75,6 +113,13 @@ namespace NodeEditor
        
     }
 
+    void GraphView::Tick(double dt)
+    {
+        //dispatch pending events
+        mEventDispatcher.DispatchEvents(dt);
+        Widget::Tick(dt);
+    }
+
     void GraphView::DrawContextMenu()
     {
        //here add graph specific commands
@@ -83,7 +128,7 @@ namespace NodeEditor
     void GraphView::DrawNodes()
     {
         // nodes draw themselves; ensure nodes' Draw() called in order (topmost last if you want top Z)
-        for (auto& n : Nodes)
+        for (auto& [id,n] : Nodes)
         {
             if (n->IsVisible())
                 n->Draw();
@@ -92,9 +137,9 @@ namespace NodeEditor
 
     void GraphView::DrawConnections()
     {
-        for (auto& conn : Connections)
+        for (const auto& [id, conn] : Connections)
         {
-            DrawConnection(conn);
+            DrawConnection(*conn);
         }
     }
 
@@ -186,6 +231,11 @@ namespace NodeEditor
         FocusedNode = n;
         //TODO: check for actual change before broadcasting
         OnFocusedNodeChanged(std::move(n));
+    }
+
+    void GraphView::PushEvent(ARC::Event&& e)
+    {
+        mEventDispatcher.PushEvent(std::move(e));
     }
 
     bool GraphView::OnMouseClick(WidgetEvent& e)
