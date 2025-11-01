@@ -218,7 +218,7 @@ namespace NodeEditor
         }
 
         //panning
-        if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Middle))
         {
             ScrollOffset += e.Value / Zoom; //zoom aware scrolling
             return true;

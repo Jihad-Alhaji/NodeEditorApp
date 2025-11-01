@@ -2,21 +2,32 @@
 #include"NodeGraphFactories.h"
 #include<string>
 #include<vector>
+#include<unordered_map>
+
 
 //singleton class , database object of all graph , node, pin types
-//alos act as a bridge class that fully encapsulates it implementation, this was done to make sure its api is consistent 
 class NodeEditorRegistery
 {
+	struct GraphData
+	{
+		std::shared_ptr<GraphViewFactory> Factory;
+		std::unordered_map < std::string, std::shared_ptr<GraphNodeFactory>> Nodes;
+	};
+
 	NodeEditorRegistery();
 	inline static NodeEditorRegistery* Singleton = nullptr;
 
-	std::unique_ptr<class NEReg_Impl> Implementation;
+	std::unordered_map<std::string, GraphData> Graphs;
+	std::unordered_map<std::string, std::shared_ptr<GraphPinFactory	>> Pins;
+
+	GraphData* GetGraphData(const std::string& key);
+	void UnregisterAll();
 public:
 	static NodeEditorRegistery* Get();
 	static NodeEditorRegistery& GetChecked();
 	static void Initialize();
 
-	void RegisterGraph(const std::string& Key, std::shared_ptr < GraphViewFactory>&& factory);
+	void RegisterGraph(const std::string& Key, std::shared_ptr <GraphViewFactory>&& factory);
 	std::vector<std::string> GetRegisteredGraphs();
 	GraphViewFactory* GetGraphFactory(const std::string& Key);
 	std::shared_ptr<NodeEditor::GraphView> SpawnGraph(const std::string& Key);

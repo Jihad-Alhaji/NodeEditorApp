@@ -44,8 +44,6 @@ namespace NodeEditor
         Structures::TMultiDelegate<std::weak_ptr<GraphNode>> OnFocusedNodeChanged;
 
         void PushEvent(ARC::Event&& e);
-
-        
     protected:
         // original fields
         std::shared_ptr<Graphics::SimpleTexture> Tex_BG;

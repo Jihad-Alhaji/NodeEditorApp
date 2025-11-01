@@ -66,7 +66,7 @@ public:
     std::vector<std::shared_ptr<GraphPin>> Inputs;
     std::vector<std::shared_ptr<GraphPin>> Outputs;
 
-   
+    
     GraphNode(const std::string& title);
 
     //custom layout based on graph layout

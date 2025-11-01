@@ -261,6 +261,7 @@ namespace NodeEditor
 
     void GraphNode::DublicateNode()
     {
+        ArcWarning("node dublications still in development")
     }
 
     bool GraphNode::OnMouseClick(WidgetEvent& e)

@@ -23,7 +23,7 @@ struct BlueprintGraph_Factory :public GraphViewFactory
 };
 
 
-//the basic not class using in a blueprint graph
+//the basic node class used in a blueprint graph
 class BlueprintNode : public NodeEditor::GraphNode
 {
 public:
@@ -32,6 +32,7 @@ public:
 	BlueprintNode();
 	Function_t Function;
 
+	void DrawContextMenu()override;
 	virtual bool Execute();
 };
 
