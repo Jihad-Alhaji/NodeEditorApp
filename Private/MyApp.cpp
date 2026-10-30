@@ -21,15 +21,22 @@ bool MyApp::Init()
 	// Load and set up fonts
 	ImFontAtlas* fontAtlas = io.Fonts;
 	fontAtlas->Clear();
-	ImFont* myFont = fontAtlas->AddFontFromFileTTF((GetResourcesDir() + "Fonts/Lato-Regular.ttf").c_str(), 24);
+	ImFont* myFont = fontAtlas->AddFontFromFileTTF((GetResourcesDir() + "Fonts/Lato-Regular.ttf").c_str(), 20);
 	io.FontDefault = myFont;
+
+	
+	m_CloseTex = Graphics::ResourceTexManager::GetOrCreate(GetResourcesDir() + "Icons/close.png");
+	m_MaximizeTex = Graphics::ResourceTexManager::GetOrCreate(GetResourcesDir() + "Icons/fullscreen.png");
+	m_MinimizeTex = Graphics::ResourceTexManager::GetOrCreate(GetResourcesDir() + "Icons/minimize.png");
+
+	//initialize node editor registary
+	NodeEditorRegistery::Initialize();
 
 	Lua().script_file(GetResourcesDir() + "Scripts/main.lua");
 
     mUIRoot = std::make_shared<UIManager>(Vec2( m_WinWidth, m_WinHeight ));
 	
-	//initialize node editor registary
-	NodeEditorRegistery::Initialize();
+
 	//initialize blueprint graphs
 	RegisterBlueprintGraph();
 

@@ -3,7 +3,7 @@
     "Dependencies":
     [],
     "Description":"plugins panel, UI panel to access plugins",
-    "LoadMode": 0,
+    "LoadMode": 1,
     "Name":"PluginsPanel",
     "Version":"1.0"
 }
