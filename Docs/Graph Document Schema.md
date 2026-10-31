@@ -2,6 +2,18 @@
 
 This document defines the minimal, versioned JSON format for saving one graph. NE-M1-02 implements the in-memory JSON save/load foundation through `GraphView::SaveDocument` and `GraphView::LoadDocument`; file dialogs and file I/O are not included.
 
+## NE-M1-03 manual round-trip procedure and status
+
+This acceptance workflow exercises the first useful Blueprint graph with a non-default `Print Message` string. It is a manual application check, not an automated test.
+
+1. Start the app and create or load a Blueprint graph containing `Start → Print Message → End`. Record each node's document ID and graph position.
+2. Set the Print Message text to `NE-M1-03 round-trip check` (or another clearly non-default value).
+3. Trigger the app's save action. Confirm the resource document contains the same three node IDs and positions, both `exec.out` to `exec.in` connections, and `properties.message` with the authored string on the Print Message node.
+4. Close and restart the app (or clear the graph and invoke load). Confirm the node types, IDs, positions, links, and authored message match the saved document.
+5. Execute the graph. Confirm the application log emits the authored string and the execution result succeeds.
+
+Status (2026-10-31): manual acceptance passed. After reloading, the app displayed the authored text `this is a non default message`; the persisted `Resources/BlueprintGraph.json` showed node IDs `1`, `2`, and `3`, their graph positions, both expected `exec.out` → `exec.in` links, and `properties.message` on node `2`. The graph UI showed Start → Print Message → End. The reopened graph was executed, and the product owner confirmed that the application log emitted `this is a non default message`. The task is Done. The resource file is user-authored/generated graph data and must not be treated as a code fixture or committed without an explicit decision.
+
 ## Example
 
 ```json
