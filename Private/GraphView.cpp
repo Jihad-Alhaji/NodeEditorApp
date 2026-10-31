@@ -53,6 +53,39 @@ namespace NodeEditor
         {
             return;
         }
+        // basic connection rules
+		auto f = conn->From.lock();
+		auto t = conn->To.lock();
+
+		//check if pins are valid and not the same pin
+		if (!f || !t)
+		{
+			return;
+		}
+		
+		//prevent connecting pins on the same node
+		if (f->ParentNode.lock() == t->ParentNode.lock())
+		{
+			return;
+		}
+
+		//respect pin connection rules
+        if (!f->AllowMultipleConnections() && f->IsConnected())
+        {
+            return;
+        }
+
+		if (!t->AllowMultipleConnections() && t->IsConnected())
+		{
+			return;
+		}
+
+		//respect pin connection rules
+		if (!f->AllowConnectionWith(t) || !t->AllowConnectionWith(f))
+		{
+			return;
+		}
+
         conn->Connect();
         Connections[conn->ConnectionId] = std::move(conn);
     }
