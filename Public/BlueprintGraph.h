@@ -1,12 +1,21 @@
 #pragma once
 #include"GraphView.h"
 #include"NodeGraphFactories.h"
+#include <cstddef>
 
 //contextual visual script graph, allows using functions and variables to do scripting
 class BlueprintGraph : public NodeEditor::GraphView
 {
 public:
+	struct ExecutionResult
+	{
+		bool Success = false;
+		std::string Diagnostic;
+		std::size_t StepsExecuted = 0;
+	};
+	static constexpr std::size_t DefaultStepLimit = 1024;
 	BlueprintGraph();
+	ExecutionResult Execute(std::size_t stepLimit = DefaultStepLimit);
 
 protected:
 	//void DrawConnection(const NodeEditor::GraphConnection& con)override;
@@ -35,6 +44,34 @@ public:
 	void DrawContextMenu()override;
 	bool ExecuteFromHere();
 	virtual bool Execute();
+	virtual bool IsStartNode() const { return false; }
+	virtual bool IsEndNode() const { return false; }
+	virtual bool AllowsFlowInput() const { return true; }
+	virtual bool AllowsFlowOutput() const { return true; }
+};
+
+class BlueprintFlowPin : public NodeEditor::GraphPin
+{
+public:
+	BlueprintFlowPin();
+};
+
+class BlueprintStartNode : public BlueprintNode
+{
+public:
+	BlueprintStartNode();
+	bool Execute() override { return true; }
+	bool IsStartNode() const override { return true; }
+	bool AllowsFlowInput() const override { return false; }
+};
+
+class BlueprintEndNode : public BlueprintNode
+{
+public:
+	BlueprintEndNode();
+	bool Execute() override { return true; }
+	bool IsEndNode() const override { return true; }
+	bool AllowsFlowOutput() const override { return false; }
 };
 
 class BlueprintPrintMessageNode : public BlueprintNode
@@ -67,6 +104,11 @@ struct BlueprintNode_Factory :public GraphNodeFactory
 struct BlueprintStartNode_Factory :public GraphNodeFactory
 {
 	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery* Registery)const override;
+};
+
+struct BlueprintEndNode_Factory :public GraphNodeFactory
+{
+	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery*)const override;
 };
 
 struct BlueprintPrintMessageNode_Factory :public GraphNodeFactory

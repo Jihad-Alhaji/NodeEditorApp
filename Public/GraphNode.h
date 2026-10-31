@@ -23,6 +23,7 @@ public:
     std::weak_ptr<class GraphNode> ParentNode;
 
     GraphPin();
+    virtual bool IsFlowPin() const { return Role == EPinRole::Flow; }
 
     void Draw()override;
     virtual void DrawContextMenu();

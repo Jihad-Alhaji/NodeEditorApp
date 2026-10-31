@@ -1,6 +1,6 @@
 # Graph API: first execution flow contract
 
-This document defines the planned contract for the first executable Blueprint workflow. The C++ graph model now identifies flow pins with `EPinRole::Flow`; graph validation and execution are still future work.
+This document defines the contract for the first executable Blueprint workflow. The C++ graph model identifies flow pins with `EPinRole::Flow`, and `BlueprintGraph::Execute` validates and runs the synchronous flow.
 
 ## Scope
 
@@ -24,4 +24,6 @@ Unreachable non-Start nodes need not execute. The validator may report them as w
 
 ## Implementation note
 
-`GraphPin` stores input/output direction, an explicit `EPinRole` (`Data` or `Flow`), and connections by generated ID. The canvas currently accepts links based on opposite direction and different owner nodes without checking role; `GraphView::AddConnection` replaces a map entry on ID collision. The executor must validate endpoint membership and flow cardinality before traversal, and connection insertion should avoid silently replacing a distinct connection. Keep any storage change minimal. Do not apply the flow-link one-outgoing rule to data pins: data-pin fan-out/cardinality remains open and may vary by data type and use case (for example, an image output may connect to multiple consumers). This task does not define a data-pin typing/value-transfer API.
+`GraphPin` stores input/output direction, an explicit `EPinRole` (`Data` or `Flow`), and connections by generated ID. Blueprint flow pins use the dedicated `BlueprintFlowPin` class. Start and End use dedicated node classes; `BlueprintNode` exposes virtual start/end identity, flow-input/output policy, and execution behavior for specialization. The executor uses those virtual contracts instead of node titles. `BlueprintGraph::Execute` validates the graph connection table against endpoint ownership and pin references, then follows the unique flow edge from Start to End. The configurable finite step limit defaults to 1024 executed nodes, including Start and End. A node behavior failure stops execution with the node name and ID in the diagnostic. The Start context-menu shortcut is retained as a convenience and delegates to this graph executor.
+
+The canvas still accepts links based on opposite direction and different owner nodes without checking role, and `GraphView::AddConnection` replaces a map entry on ID collision. These remain authoring/storage concerns; the executor rejects inconsistent endpoint references before executing behavior. Do not apply the flow-link one-outgoing rule to data pins: data-pin fan-out/cardinality remains open and may vary by data type and use case. This task does not define a data-pin typing/value-transfer API.

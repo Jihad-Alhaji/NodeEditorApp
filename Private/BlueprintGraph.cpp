@@ -3,6 +3,8 @@
 #include<imgui/imgui.h>
 #include<ArcLog/LogSystem.h>
 #include<imgui/imgui_stdlib.h>
+#include <unordered_map>
+#include <unordered_set>
 
 BlueprintGraph::BlueprintGraph()
 {
@@ -16,7 +18,9 @@ void BlueprintGraph::DrawContextMenu()
 	ImGui::Separator();
 	if (ImGui::Selectable("Execute Graph"))
 	{
-
+		auto result = Execute();
+		Logging::LogSystem::ArcLogger.Send(result.Success ? Logging::LogVerbosity::NOTE : Logging::LogVerbosity::ARCERROR,
+			result.Success ? "Blueprint execution succeeded." : result.Diagnostic);
 	}
 	ImGui::SeparatorText("Add Nodes");
 	for (auto& c : ctx_Nodes) 
@@ -37,6 +41,25 @@ void BlueprintGraph::DrawContextMenu()
 
 BlueprintNode::BlueprintNode() :NodeEditor::GraphNode("")
 {
+}
+
+BlueprintFlowPin::BlueprintFlowPin()
+{
+	Role = NodeEditor::EPinRole::Flow;
+}
+
+BlueprintStartNode::BlueprintStartNode() : BlueprintNode()
+{
+	Title = "Start";
+	NodeSize = { 160, 80 };
+	SetSize(NodeSize);
+}
+
+BlueprintEndNode::BlueprintEndNode() : BlueprintNode()
+{
+	Title = "End";
+	NodeSize = { 160, 80 };
+	SetSize(NodeSize);
 }
 
 BlueprintPrintMessageNode::BlueprintPrintMessageNode() : BlueprintNode()
@@ -61,14 +84,21 @@ void BlueprintPrintMessageNode::DrawContents()
 
 std::shared_ptr<NodeEditor::GraphNode> BlueprintStartNode_Factory::Create(NodeEditorRegistery* Registery) const
 {
-	auto node = std::make_shared<BlueprintNode>();
-	node->Title = "Start";
-	node->NodeSize = { 160, 80 };
-	node->SetSize(node->NodeSize);
-	auto flowOut = Registery->SpawnPin("flow");
+	auto node = std::make_shared<BlueprintStartNode>();
+	auto flowOut = std::make_shared<BlueprintFlowPin>();
 	flowOut->SetName("flow");
 	flowOut->Type = NodeEditor::EPinType::Output;
 	node->AddPin(std::move(flowOut));
+	return node;
+}
+
+std::shared_ptr<NodeEditor::GraphNode> BlueprintEndNode_Factory::Create(NodeEditorRegistery*) const
+{
+	auto node = std::make_shared<BlueprintEndNode>();
+	auto flowIn = std::make_shared<BlueprintFlowPin>();
+	flowIn->SetName("flow");
+	flowIn->Type = NodeEditor::EPinType::Input;
+	node->AddPin(std::move(flowIn));
 	return node;
 }
 
@@ -77,7 +107,7 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintPrintMessageNode_Factory::Create
 	auto node = std::make_shared<BlueprintPrintMessageNode>();
 	for (const auto& direction : { NodeEditor::EPinType::Input, NodeEditor::EPinType::Output })
 	{
-		auto pin = Registery->SpawnPin("flow");
+		auto pin = std::make_shared<BlueprintFlowPin>();
 		pin->SetName("flow");
 		pin->Type = direction;
 		node->AddPin(std::move(pin));
@@ -88,7 +118,7 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintPrintMessageNode_Factory::Create
 void BlueprintNode::DrawContextMenu()
 {
 	GraphNode::DrawContextMenu();
-	if (Title == "Start")
+	if (IsStartNode())
 	{
 		ImGui::Separator();
 		if (ImGui::Selectable("Debug Execute From Here"))
@@ -104,37 +134,134 @@ void BlueprintNode::DrawContextMenu()
 
 bool BlueprintNode::ExecuteFromHere()
 {
-	if (Title != "Start" || Outputs.size() != 1 || !Outputs.front() ||
-		Outputs.front()->Role != NodeEditor::EPinRole::Flow || Outputs.front()->Connections.size() != 1)
+	if (!IsStartNode()) return false;
+	auto* graph = dynamic_cast<BlueprintGraph*>(GetGraph());
+	return graph && graph->Execute().Success;
+}
+
+BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
+{
+	using namespace NodeEditor;
+	ExecutionResult result;
+	auto fail = [&result](const std::string& message) {
+		result.Diagnostic = message;
+		return result;
+	};
+
+	std::vector<std::shared_ptr<BlueprintNode>> starts;
+	std::unordered_set<const GraphNode*> graphNodes;
+	for (const auto& [id, node] : Nodes)
 	{
-		return false;
+		if (!node) return fail("Graph contains a null node entry (ID " + std::to_string(id) + ").");
+		graphNodes.insert(node.get());
+		auto blueprintNode = std::dynamic_pointer_cast<BlueprintNode>(node);
+		if (blueprintNode && blueprintNode->IsStartNode()) starts.push_back(std::move(blueprintNode));
+	}
+	if (starts.size() != 1) return fail("Graph must contain exactly one Start node; found " + std::to_string(starts.size()) + ".");
+
+	struct FlowEdge { std::shared_ptr<GraphPin> From; std::shared_ptr<GraphPin> To; };
+	std::unordered_map<const GraphNode*, std::vector<FlowEdge>> outgoing;
+	std::unordered_map<const GraphNode*, std::size_t> incoming;
+	std::unordered_set<const GraphConnection*> graphConnections;
+	auto validateConnection = [&](const std::shared_ptr<GraphConnection>& connection, std::size_t id) -> std::string {
+		if (!connection) return "Graph contains a null connection entry (ID " + std::to_string(id) + ").";
+		auto from = connection->From.lock();
+		auto to = connection->To.lock();
+		if (!from || !to) return "Connection " + std::to_string(id) + " has an expired endpoint.";
+		auto sourceNode = from->ParentNode.lock();
+		auto destinationNode = to->ParentNode.lock();
+		if (!sourceNode || !destinationNode || !graphNodes.count(sourceNode.get()) || !graphNodes.count(destinationNode.get()))
+			return "Connection " + std::to_string(id) + " has an endpoint outside this graph.";
+		if (sourceNode == destinationNode) return "Connection " + std::to_string(id) + " links a node to itself.";
+		if (from->Type != EPinType::Output || to->Type != EPinType::Input)
+			return "Connection " + std::to_string(id) + " has invalid direction; links must run output to input.";
+		if (std::find(sourceNode->Outputs.begin(), sourceNode->Outputs.end(), from) == sourceNode->Outputs.end() ||
+			std::find(destinationNode->Inputs.begin(), destinationNode->Inputs.end(), to) == destinationNode->Inputs.end())
+			return "Connection " + std::to_string(id) + " references a pin not owned by its endpoint node.";
+		if (from->Role != to->Role) return "Connection " + std::to_string(id) + " has mismatched pin roles.";
+		auto fromRef = from->Connections.find(id);
+		auto toRef = to->Connections.find(id);
+		if (fromRef == from->Connections.end() || toRef == to->Connections.end() ||
+			fromRef->second.lock() != connection || toRef->second.lock() != connection)
+			return "Connection " + std::to_string(id) + " is missing or mismatched in an endpoint pin.";
+		if (from->Role == EPinRole::Data) return {};
+		if (!from->IsFlowPin() || !to->IsFlowPin()) return "Connection " + std::to_string(id) + " has invalid flow pin metadata.";
+		auto sourceBlueprintNode = std::dynamic_pointer_cast<BlueprintNode>(sourceNode);
+		auto destinationBlueprintNode = std::dynamic_pointer_cast<BlueprintNode>(destinationNode);
+		if (!sourceBlueprintNode || !destinationBlueprintNode || !sourceBlueprintNode->AllowsFlowOutput() || !destinationBlueprintNode->AllowsFlowInput())
+			return "Connection " + std::to_string(id) + " violates a node's flow input/output behavior.";
+		outgoing[sourceNode.get()].push_back({ from, to });
+		++incoming[destinationNode.get()];
+		return {};
+	};
+
+	for (const auto& [id, connection] : Connections)
+	{
+		auto error = validateConnection(connection, id);
+		if (!error.empty()) return fail(error);
+		graphConnections.insert(connection.get());
+	}
+	for (const auto& [nodeId, node] : Nodes)
+	{
+		for (const auto* pins : { &node->Inputs, &node->Outputs })
+		{
+			for (const auto& pin : *pins)
+			{
+				if (!pin) return fail("Node " + node->Title + " contains a null pin.");
+				for (const auto& [id, weakConnection] : pin->Connections)
+				{
+					auto connection = weakConnection.lock();
+					if (!connection || !graphConnections.count(connection.get()) || !Connections.count(id) || Connections.at(id) != connection)
+						return fail("Pin on node " + node->Title + " has an invalid connection reference (ID " + std::to_string(id) + ").");
+					auto endpoint = pin->Type == EPinType::Input ? connection->To.lock() : connection->From.lock();
+					if (endpoint != pin) return fail("Pin on node " + node->Title + " has a mismatched connection reference (ID " + std::to_string(id) + ").");
+				}
+			}
+		}
+	}
+	for (const auto& [source, edges] : outgoing)
+		if (edges.size() > 1)
+		{
+			auto node = std::find_if(Nodes.begin(), Nodes.end(), [source](const auto& entry) { return entry.second.get() == source; });
+			return fail("Node " + (node == Nodes.end() ? std::string("<unknown>") : node->second->Title) + " has multiple outgoing flow links.");
+		}
+
+	auto start = starts.front();
+	if (incoming[start.get()] != 0) return fail("Start node must not have incoming flow links.");
+	if (outgoing[start.get()].size() != 1) return fail("Start node must have exactly one outgoing flow link.");
+	for (const auto& [nodePtr, edges] : outgoing)
+	{
+		auto nodeIt = std::find_if(Nodes.begin(), Nodes.end(), [nodePtr](const auto& entry) { return entry.second.get() == nodePtr; });
+		if (nodeIt != Nodes.end())
+		{
+			auto node = std::dynamic_pointer_cast<BlueprintNode>(nodeIt->second);
+			if (node && node->IsEndNode() && !edges.empty()) return fail("End node " + node->Title + " has an outgoing flow link.");
+		}
 	}
 
-	auto connection = Outputs.front()->Connections.begin()->second.lock();
-	if (!connection)
+	std::vector<std::shared_ptr<BlueprintNode>> path;
+	std::unordered_set<const GraphNode*> visited;
+	auto current = start;
+	while (true)
 	{
-		return false;
+		if (!visited.insert(current.get()).second) return fail("Execution path contains a cycle at node " + current->Title + ".");
+		path.push_back(current);
+		if (current->IsEndNode()) break;
+		auto found = outgoing.find(current.get());
+		if (found == outgoing.end() || found->second.empty()) return fail("Reachable node " + current->Title + " has no successor and does not terminate at End.");
+		current = std::dynamic_pointer_cast<BlueprintNode>(found->second.front().To->ParentNode.lock());
+		if (!current) return fail("Flow link destination does not implement Blueprint execution.");
 	}
-	auto source = connection->From.lock();
-	auto destination = connection->To.lock();
-	if (!source || !destination || source != Outputs.front() ||
-		destination->Type != NodeEditor::EPinType::Input || destination->Role != NodeEditor::EPinRole::Flow ||
-		source->ParentNode.lock().get() != this ||
-		source->ParentNode.lock() == destination->ParentNode.lock())
+	if (path.size() > stepLimit) return fail("Execution step limit of " + std::to_string(stepLimit) + " would be exceeded.");
+
+	for (const auto& node : path)
 	{
-		return false;
+		if (!node->Execute()) return fail("Node execution failed: " + node->Title + " (ID " + std::to_string(node->NodeId) + ").");
+		++result.StepsExecuted;
 	}
-	auto destinationNode = destination->ParentNode.lock();
-	if (!destinationNode)
-	{
-		return false;
-	}
-	auto printNode = std::dynamic_pointer_cast<BlueprintPrintMessageNode>(destinationNode);
-	if (!printNode)
-	{
-		return false;
-	}
-	return printNode->Execute();
+	result.Success = true;
+	result.Diagnostic = "Execution completed successfully.";
+	return result;
 }
 
 bool BlueprintNode::Execute()
@@ -192,9 +319,7 @@ std::shared_ptr<NodeEditor::GraphPin> BlueprintPin_Default_Factory::Create(NodeE
 
 std::shared_ptr<NodeEditor::GraphPin> BlueprintPin_Flow_Factory::Create(NodeEditorRegistery*) const
 {
-	auto pin = std::make_shared<NodeEditor::GraphPin>();
-	pin->Role = NodeEditor::EPinRole::Flow;
-	return pin;
+	return std::make_shared<BlueprintFlowPin>();
 }
 
 
@@ -209,11 +334,7 @@ void RegisterBlueprintGraph()
 	reg->RegisterNode("Blueprint", "Start", std::make_shared<BlueprintStartNode_Factory>());
 	reg->RegisterNode("Blueprint", "Print Message", std::make_shared<BlueprintPrintMessageNode_Factory>());
 	{
-		auto end = std::make_shared<BlueprintNode_Factory>();
-		end->Title = "End";
-		end->Function = [](const BlueprintNode::Args_t&, const BlueprintNode::Args_t&) { return true; };
-		end->Inputs.push_back({ "flow", "flow" });
-		reg->RegisterNode("Blueprint", "End", std::move(end));
+		reg->RegisterNode("Blueprint", "End", std::make_shared<BlueprintEndNode_Factory>());
 	}
 	{
 		auto d1 = std::make_shared<BlueprintNode_Factory>();
