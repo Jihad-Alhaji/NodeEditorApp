@@ -29,16 +29,18 @@ void RegisterBlueprintGraph()
 	}
 	{
 		auto d1 = std::make_shared<BlueprintNode_Factory>();
+		d1->TypeKey = "default";
 		d1->Title = "default node";
-		d1->Inputs.push_back({ "default","in" });
-		d1->Outputs.push_back({ "default","out" });
+		d1->Inputs.push_back({ "default","in", "data.in" });
+		d1->Outputs.push_back({ "default","out", "data.out" });
 		reg->RegisterNode("Blueprint", "default", std::move(d1));
 	}
 	
 	{
 		auto d1 = std::make_shared<BlueprintNode_Factory>();
+		d1->TypeKey = "Execute";
 		d1->Title = "Execute";
-		d1->Outputs.push_back({ "default","out" });
+		d1->Outputs.push_back({ "default","out", "data.out" });
 		reg->RegisterNode("Blueprint", "Execute", std::move(d1));
 	}
 }

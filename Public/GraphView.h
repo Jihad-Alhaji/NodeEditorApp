@@ -4,14 +4,18 @@
 #include <vector>
 #include <memory>
 #include"GraphNode.h"
+#include <ArcCore/nlohmann.hpp>
+#include <ResourceManagement/ISerializationInterface.h>
 #include<Structures/Delegate.h>
 #include<Event.h>
 namespace NodeEditor
 {
 
-    class GraphView : public Widget
+    class GraphView : public Widget, public ResourceManagement::Serialization::ISerializationInterface
     {
     public:
+        using DocumentArchive = ResourceManagement::Serialization::ISerializationInterface::Serialzer_t;
+
         GraphView();
 
         virtual void Draw() override;
@@ -23,6 +27,17 @@ namespace NodeEditor
 
         // nodes & connections management
         void AddNode(std::shared_ptr<GraphNode> node);
+        std::vector<std::shared_ptr<GraphNode>> GetNodes() const;
+        std::vector<std::shared_ptr<GraphConnection>> GetConnections() const;
+        uint64_t GetNextDocumentNodeId() const { return NextDocumentNodeId; }
+        void ReplaceContents(std::vector<std::shared_ptr<GraphNode>> nodes, std::vector<std::shared_ptr<GraphConnection>> connections, uint64_t nextId);
+
+        DocumentArchive SaveDocument(const std::string& graphType) const;
+        bool LoadDocument(const DocumentArchive& document, const std::string& expectedGraphType, std::string& diagnostic);
+        bool Load(const DocumentArchive& archive) override;
+        void Save(DocumentArchive& archive) override;
+        const std::string& GetPersistenceDiagnostic() const { return PersistenceDiagnostic; }
+
         void RemoveNode(size_t id);
 
         void AddConnection(std::shared_ptr<GraphConnection>&& conn);
@@ -53,6 +68,9 @@ namespace NodeEditor
         float BGTextureTileing;
 
         size_t NodeIdCounter = 0;
+        uint64_t NextDocumentNodeId = 1;
+        std::string DocumentGraphType;
+        std::string PersistenceDiagnostic;
 
         // nodes and connections
         std::unordered_map<size_t, std::shared_ptr<GraphNode>> Nodes;

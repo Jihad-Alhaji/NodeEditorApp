@@ -17,10 +17,12 @@ public:
     virtual bool IsStartNode() const { return false; }
     virtual bool IsEndNode() const { return false; }
 };
-struct PinDef { std::string Factory; std::string Name; };
+struct PinDef { std::string Factory; std::string Name; std::string PinKey; };
 struct BlueprintNode_Factory : public GraphNodeFactory
 {
     std::string Title; std::vector<PinDef> Inputs; std::vector<PinDef> Outputs; BlueprintNode::Function_t Function;
+    std::string TypeKey;
+    std::string GetTypeKey() const override { return TypeKey; }
     std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery*) const override;
 };
 

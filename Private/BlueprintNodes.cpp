@@ -45,8 +45,10 @@ void BlueprintPrintMessageNode::DrawContents()
 std::shared_ptr<NodeEditor::GraphNode> BlueprintStartNode_Factory::Create(NodeEditorRegistery* Registery) const
 {
 	auto node = std::make_shared<BlueprintStartNode>();
+	node->TypeKey = "Start";
 	auto flowOut = std::make_shared<BlueprintFlowPin>();
 	flowOut->SetName("flow");
+	flowOut->PinKey = "exec.out";
 	flowOut->Type = NodeEditor::EPinType::Output;
 	node->AddPin(std::move(flowOut));
 	return node;
@@ -55,8 +57,10 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintStartNode_Factory::Create(NodeEd
 std::shared_ptr<NodeEditor::GraphNode> BlueprintEndNode_Factory::Create(NodeEditorRegistery*) const
 {
 	auto node = std::make_shared<BlueprintEndNode>();
+	node->TypeKey = "End";
 	auto flowIn = std::make_shared<BlueprintFlowPin>();
 	flowIn->SetName("flow");
+	flowIn->PinKey = "exec.in";
 	flowIn->Type = NodeEditor::EPinType::Input;
 	node->AddPin(std::move(flowIn));
 	return node;
@@ -65,10 +69,12 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintEndNode_Factory::Create(NodeEdit
 std::shared_ptr<NodeEditor::GraphNode> BlueprintPrintMessageNode_Factory::Create(NodeEditorRegistery* Registery) const
 {
 	auto node = std::make_shared<BlueprintPrintMessageNode>();
+	node->TypeKey = "Print Message";
 	for (const auto& direction : { NodeEditor::EPinType::Input, NodeEditor::EPinType::Output })
 	{
 		auto pin = std::make_shared<BlueprintFlowPin>();
 		pin->SetName("flow");
+		pin->PinKey = direction == NodeEditor::EPinType::Input ? "exec.in" : "exec.out";
 		pin->Type = direction;
 		node->AddPin(std::move(pin));
 	}

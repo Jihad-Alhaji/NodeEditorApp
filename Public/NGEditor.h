@@ -17,6 +17,7 @@ namespace NodeEditor
         // --- Layout ---
         virtual void UpdateLayout(const Rect& ParentRect)override;
 
+		std::shared_ptr<GraphView> GetEditedGraph() { return Graph; }
     protected:
         
         std::shared_ptr<Widget> HB_Main;//main horizontal box

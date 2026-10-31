@@ -18,6 +18,8 @@ public:
 	
 
     std::string Name;
+    // Stable semantic identity from the node definition; independent of label and PinId.
+    std::string PinKey;
 
     // weak backref to owning node
     std::weak_ptr<class GraphNode> ParentNode;

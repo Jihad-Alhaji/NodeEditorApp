@@ -47,6 +47,15 @@ bool MyApp::Init()
 		g->SetAlignment(EAlign::Center, EAlign::Center);
 		g->SetSize({ 1080,720 });
 		mUIRoot->AddRootWidget(g);
+
+
+		OnAppSave.Bind(1001,[this, g](Serialzer_t& ar) {
+
+			ResourceManagement::Serialization::SaveToFile(*g->GetEditedGraph(), GetResourcesDir() + "BlueprintGraph.json");
+		});
+		OnAppLoad.Bind(1001, [this, g](const Serialzer_t& ar) {
+			ResourceManagement::Serialization::LoadFromFile(*g->GetEditedGraph(), GetResourcesDir() + "BlueprintGraph.json");
+		});
 	}
 	return true;
 }

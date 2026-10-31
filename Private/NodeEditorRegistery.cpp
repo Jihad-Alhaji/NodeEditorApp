@@ -1,4 +1,7 @@
 #include "NodeEditorRegistery.h"
+#include "GraphView.h"
+#include "GraphNode.h"
+#include <typeinfo>
 #include<cassert>
 #include<unordered_map>
 
@@ -68,6 +71,39 @@ GraphViewFactory* NodeEditorRegistery::GetGraphFactory(const std::string& Key)
 
 	return g->Factory.get();
 }
+
+std::vector<std::string> NodeEditorRegistery::GetRegisteredNodeTypes(const std::string& GraphKey) const
+{
+	std::vector<std::string> result;
+	auto graph = Graphs.find(GraphKey);
+	if (graph != Graphs.end()) for (const auto& entry : graph->second.Nodes) result.push_back(entry.first);
+	return result;
+}
+
+std::string NodeEditorRegistery::GetNodeTypeKey(const std::string& GraphKey, const NodeEditor::GraphNode* node) const
+{
+	auto graph = Graphs.find(GraphKey);
+	if (graph == Graphs.end() || !node) return {};
+	for (const auto& entry : graph->second.Nodes)
+	{
+		if (entry.second->GetTypeKey() == entry.first && node->TypeKey == entry.first) return entry.first;
+	}
+	return {};
+}
+
+std::string NodeEditorRegistery::GetGraphTypeKey(const NodeEditor::GraphView* graph) const
+{
+	for (const auto& entry : Graphs)
+	{
+		if (entry.second.Factory->GetTypeKey() == entry.first)
+		{
+			auto created = entry.second.Factory->Create(const_cast<NodeEditorRegistery*>(this));
+			if (created && typeid(*created) == typeid(*graph)) return entry.first;
+		}
+	}
+	return {};
+}
+
 std::shared_ptr<NodeEditor::GraphView> NodeEditorRegistery::SpawnGraph(const std::string& Key)
 {
 	auto gF = GetGraphFactory(Key);

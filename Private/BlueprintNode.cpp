@@ -34,6 +34,7 @@ bool BlueprintNode::ExecuteFromHere()
 std::shared_ptr<NodeEditor::GraphNode> BlueprintNode_Factory::Create(NodeEditorRegistery* Registery) const
 {
 	auto n = std::make_shared<BlueprintNode>();
+	n->TypeKey = TypeKey;
 
 	n->Title = Title;
 	for (const auto& input : Inputs)
@@ -51,6 +52,7 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintNode_Factory::Create(NodeEditorR
 		if (p)
 		{
 			p->SetName(i.Name);
+			p->PinKey = i.PinKey;
 			p->Type = NodeEditor::EPinType::Input;
 			n->AddPin(std::move(p));
 		}
@@ -61,6 +63,7 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintNode_Factory::Create(NodeEditorR
 		if (p)
 		{
 			p->SetName(i.Name);
+			p->PinKey = i.PinKey;
 			p->Type = NodeEditor::EPinType::Output;
 			n->AddPin(std::move(p));
 		}

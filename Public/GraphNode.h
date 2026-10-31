@@ -3,6 +3,7 @@
 #include "UI_VerticalBox.h"
 #include <vector>
 #include <memory>
+#include <nlohmann.hpp>
 namespace NodeEditor
 {
 class GraphNode : public Widget, public std::enable_shared_from_this<GraphNode>
@@ -12,6 +13,10 @@ public:
     ImVec2 GraphPos = { 0, 0 }; // position in graph space (not screen)
     ImVec2 NodeSize = { 160, 80 };// original node size
     size_t NodeId = -1;
+    uint64_t DocumentId = 0;
+    std::string TypeKey;
+    virtual nlohmann::json SaveProperties() const { return nlohmann::json::object(); }
+    virtual bool LoadProperties(const nlohmann::json& value, std::string& diagnostic) { if (!value.is_object() || !value.empty()) { diagnostic = "unsupported node properties"; return false; } return true; }
 
     std::vector<std::shared_ptr<GraphPin>> Inputs;
     std::vector<std::shared_ptr<GraphPin>> Outputs;

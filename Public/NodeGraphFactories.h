@@ -1,5 +1,6 @@
 #pragma once
 #include<memory>
+#include<string>
 
 namespace NodeEditor
 {
@@ -10,6 +11,7 @@ namespace NodeEditor
 
 struct GraphNodeFactory
 {
+    virtual std::string GetTypeKey() const { return {}; }
 	virtual std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery* Registery)const = 0;
 };
 
@@ -20,5 +22,6 @@ struct GraphPinFactory
 
 struct GraphViewFactory
 {
+    virtual std::string GetTypeKey() const { return {}; }
 	virtual std::shared_ptr<NodeEditor::GraphView> Create(class NodeEditorRegistery* Registery)const = 0;
 };

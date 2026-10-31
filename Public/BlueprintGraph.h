@@ -32,5 +32,6 @@ protected:
 };
 struct BlueprintGraph_Factory : public GraphViewFactory
 {
+    std::string GetTypeKey() const override { return "Blueprint"; }
     std::shared_ptr<NodeEditor::GraphView> Create(class NodeEditorRegistery*) const override { return std::make_shared<BlueprintGraph>(); }
 };
