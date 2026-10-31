@@ -48,6 +48,9 @@ namespace NodeEditor
         ImDrawList* dl = ImGui::GetWindowDrawList();
         ImVec2 center = AbsoluteRect.Center();
         float  radius = 8;
+        auto parent = ParentNode.lock();
+        auto graph = parent ? parent->GetGraph() : nullptr;
+        float zoom = graph ? graph->GetZoom() : 1.f;
         ImGui::SetCursorScreenPos(AbsoluteRect.Min);
         ImGui::InvisibleButton("btn", AbsoluteRect.Size());//hit box 
         if (ImGui::BeginPopupContextItem("PinCtxMenu"))
@@ -56,6 +59,12 @@ namespace NodeEditor
             ImGui::EndPopup();
         }
         dl->AddCircleFilled(center, radius, IM_COL32(20, 220, 210, 220));
+        const char* pinLabel = Name.c_str();
+        float labelWidth = ImGui::CalcTextSize(pinLabel).x;
+        ImVec2 textPos = Type == EPinType::Input
+            ? ImVec2(center.x + radius + 4.f, center.y - ImGui::GetTextLineHeight() * 0.5f)
+            : ImVec2(center.x - radius - 4.f - labelWidth, center.y - ImGui::GetTextLineHeight() * 0.5f);
+        dl->AddText(textPos, IM_COL32(220, 220, 220, 230), Name.c_str());
         if (bHovered)
         {
             dl->AddCircle(center, radius + 1, IM_COL32(220, 200, 20, 220),0.f,2.f);
@@ -65,7 +74,7 @@ namespace NodeEditor
         {
             ImDrawList* dl = ImGui::GetForegroundDrawList();
             ImVec2 mPos = ImGui::GetMousePos();
-            float offset = Type == EPinType::Output ? 50.f : -50.f;
+            float offset = (Type == EPinType::Output ? 50.f : -50.f) * zoom;
            
             dl->AddBezierCubic(center, {center.x + offset,center.y}, { mPos.x - offset,mPos.y }, mPos, IM_COL32(20, 220, 210, 220), 5.f);
         }
@@ -211,8 +220,7 @@ namespace NodeEditor
         // Title
         dl->AddText(ImVec2(a.x + 8.0f, a.y + 4.0f), IM_COL32_WHITE, Title.c_str());
 
-        // Body text (placeholder)
-        dl->AddText(ImVec2(a.x + 8.0f, a.y + 30.0f), IM_COL32(200, 200, 200, 220), "Node content");
+        DrawContents();
         
         if (bFocused)
         {

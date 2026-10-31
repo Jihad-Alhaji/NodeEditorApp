@@ -33,7 +33,18 @@ public:
 	Function_t Function;
 
 	void DrawContextMenu()override;
+	bool ExecuteFromHere();
 	virtual bool Execute();
+};
+
+class BlueprintPrintMessageNode : public BlueprintNode
+{
+public:
+	BlueprintPrintMessageNode();
+	std::string Message = "Hello from my workflow";
+	bool Execute() override;
+protected:
+	void DrawContents() override;
 };
 
 //lightweight deffinitions of a pin, used for spawning a pin into a node
@@ -53,7 +64,22 @@ struct BlueprintNode_Factory :public GraphNodeFactory
 	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery* Registery)const override;
 };
 
+struct BlueprintStartNode_Factory :public GraphNodeFactory
+{
+	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery* Registery)const override;
+};
+
+struct BlueprintPrintMessageNode_Factory :public GraphNodeFactory
+{
+	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery* Registery)const override;
+};
+
 struct BlueprintPin_Default_Factory :public GraphPinFactory
+{
+	std::shared_ptr<NodeEditor::GraphPin> Create(class NodeEditorRegistery* Registery)const override;
+};
+
+struct BlueprintPin_Flow_Factory :public GraphPinFactory
 {
 	std::shared_ptr<NodeEditor::GraphPin> Create(class NodeEditorRegistery* Registery)const override;
 };

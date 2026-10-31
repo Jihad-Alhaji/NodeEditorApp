@@ -10,11 +10,14 @@ namespace NodeEditor
 class GraphView; 
 
 enum class EPinType { Input, Output };
+enum class EPinRole { Data, Flow };
 
 class GraphPin : public Widget, public std::enable_shared_from_this<GraphPin>
 {
 public:
     EPinType Type = EPinType::Input;
+    EPinRole Role = EPinRole::Data;
+    std::string Name;
 
     // weak backref to owning node
     std::weak_ptr<class GraphNode> ParentNode;
@@ -73,6 +76,7 @@ public:
     void UpdateLayout(const Rect& ParentRect)override;
 
     virtual void DrawContextMenu();
+    virtual void DrawContents() {}
 
     // widget overrides
     virtual void Draw() override;
