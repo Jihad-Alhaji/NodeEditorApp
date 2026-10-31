@@ -16,8 +16,6 @@ public:
     virtual bool Execute();
     virtual bool IsStartNode() const { return false; }
     virtual bool IsEndNode() const { return false; }
-    virtual bool AllowsFlowInput() const { return true; }
-    virtual bool AllowsFlowOutput() const { return true; }
 };
 struct PinDef { std::string Factory; std::string Name; };
 struct BlueprintNode_Factory : public GraphNodeFactory

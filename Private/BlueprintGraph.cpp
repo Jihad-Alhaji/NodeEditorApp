@@ -4,6 +4,7 @@
 #include "NodeEditorRegistery.h"
 #include <imgui/imgui.h>
 #include <ArcLog/LogSystem.h>
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
 BlueprintGraph::BlueprintGraph()
@@ -57,7 +58,11 @@ BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
 		auto blueprintNode = std::dynamic_pointer_cast<BlueprintNode>(node);
 		if (blueprintNode && blueprintNode->IsStartNode()) starts.push_back(std::move(blueprintNode));
 	}
-	if (starts.size() != 1) return fail("Graph must contain exactly one Start node; found " + std::to_string(starts.size()) + ".");
+
+	//sort starts by id
+	if (starts.empty()) return fail("Graph must contain at least one Start node; found 0.");
+	std::sort(starts.begin(), starts.end(), [](const auto& a, const auto& b) { return a->NodeId < b->NodeId; });
+	result.StartResults.reserve(starts.size());
 
 	struct FlowEdge { std::shared_ptr<GraphPin> From; std::shared_ptr<GraphPin> To; };
 	std::unordered_map<const GraphNode*, std::vector<FlowEdge>> outgoing;
@@ -86,10 +91,6 @@ BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
 			return "Connection " + std::to_string(id) + " is missing or mismatched in an endpoint pin.";
 		if (from->Role == EPinRole::Data) return {};
 		if (!from->IsFlowPin() || !to->IsFlowPin()) return "Connection " + std::to_string(id) + " has invalid flow pin metadata.";
-		auto sourceBlueprintNode = std::dynamic_pointer_cast<BlueprintNode>(sourceNode);
-		auto destinationBlueprintNode = std::dynamic_pointer_cast<BlueprintNode>(destinationNode);
-		if (!sourceBlueprintNode || !destinationBlueprintNode || !sourceBlueprintNode->AllowsFlowOutput() || !destinationBlueprintNode->AllowsFlowInput())
-			return "Connection " + std::to_string(id) + " violates a node's flow input/output behavior.";
 		outgoing[sourceNode.get()].push_back({ from, to });
 		++incoming[destinationNode.get()];
 		return {};
@@ -126,9 +127,11 @@ BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
 			return fail("Node " + (node == Nodes.end() ? std::string("<unknown>") : node->second->Title) + " has multiple outgoing flow links.");
 		}
 
-	auto start = starts.front();
-	if (incoming[start.get()] != 0) return fail("Start node must not have incoming flow links.");
-	if (outgoing[start.get()].size() != 1) return fail("Start node must have exactly one outgoing flow link.");
+	for (const auto& start : starts)
+	{
+		if (incoming[start.get()] != 0) return fail("Start node " + start->Title + " (ID " + std::to_string(start->NodeId) + ") must not have incoming flow links.");
+		if (outgoing[start.get()].size() != 1) return fail("Start node " + start->Title + " (ID " + std::to_string(start->NodeId) + ") must have exactly one outgoing flow link.");
+	}
 	for (const auto& [nodePtr, edges] : outgoing)
 	{
 		auto nodeIt = std::find_if(Nodes.begin(), Nodes.end(), [nodePtr](const auto& entry) { return entry.second.get() == nodePtr; });
@@ -139,25 +142,47 @@ BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
 		}
 	}
 
-	std::vector<std::shared_ptr<BlueprintNode>> path;
-	std::unordered_set<const GraphNode*> visited;
-	auto current = start;
-	while (true)
+	std::vector<std::vector<std::shared_ptr<BlueprintNode>>> paths;
+	paths.reserve(starts.size());
+	for (const auto& start : starts)
 	{
-		if (!visited.insert(current.get()).second) return fail("Execution path contains a cycle at node " + current->Title + ".");
-		path.push_back(current);
-		if (current->IsEndNode()) break;
-		auto found = outgoing.find(current.get());
-		if (found == outgoing.end() || found->second.empty()) return fail("Reachable node " + current->Title + " has no successor and does not terminate at End.");
-		current = std::dynamic_pointer_cast<BlueprintNode>(found->second.front().To->ParentNode.lock());
-		if (!current) return fail("Flow link destination does not implement Blueprint execution.");
+		std::vector<std::shared_ptr<BlueprintNode>> path;
+		std::unordered_set<const GraphNode*> visited;
+		auto current = start;
+		while (true)
+		{
+			if (!visited.insert(current.get()).second) return fail("Start node " + start->Title + " (ID " + std::to_string(start->NodeId) + ") reaches a cycle at node " + current->Title + ".");
+			path.push_back(current);
+			if (current->IsEndNode()) break;
+			auto found = outgoing.find(current.get());
+			if (found == outgoing.end() || found->second.empty()) return fail("Start node " + start->Title + " (ID " + std::to_string(start->NodeId) + ") reaches node " + current->Title + " without a successor or End.");
+			current = std::dynamic_pointer_cast<BlueprintNode>(found->second.front().To->ParentNode.lock());
+			if (!current) return fail("Start node " + start->Title + " (ID " + std::to_string(start->NodeId) + ") reaches a destination that does not implement Blueprint execution.");
+		}
+		if (path.size() > stepLimit) return fail("Start node " + start->Title + " (ID " + std::to_string(start->NodeId) + ") would exceed the execution step limit of " + std::to_string(stepLimit) + ".");
+		paths.push_back(std::move(path));
+		ExecutionResult::StartResult startResult;
+		startResult.StartNodeId = start->NodeId;
+		result.StartResults.push_back(std::move(startResult));
 	}
-	if (path.size() > stepLimit) return fail("Execution step limit of " + std::to_string(stepLimit) + " would be exceeded.");
 
-	for (const auto& node : path)
+	for (std::size_t i = 0; i < paths.size(); ++i)
 	{
-		if (!node->Execute()) return fail("Node execution failed: " + node->Title + " (ID " + std::to_string(node->NodeId) + ").");
-		++result.StepsExecuted;
+		auto& startResult = result.StartResults[i];
+		for (const auto& node : paths[i])
+		{
+			if (!node->Execute())
+			{
+				startResult.Diagnostic = "Node execution failed: " + node->Title + " (ID " + std::to_string(node->NodeId) + ").";
+				result.Diagnostic = "Start node " + std::to_string(startResult.StartNodeId) + " failed: " + startResult.Diagnostic;
+				return result;
+			}
+			++startResult.StepsExecuted;
+			++result.StepsExecuted;
+		}
+		startResult.Executed = true;
+		startResult.Success = true;
+		startResult.Diagnostic = "Execution completed successfully.";
 	}
 	result.Success = true;
 	result.Diagnostic = "Execution completed successfully.";

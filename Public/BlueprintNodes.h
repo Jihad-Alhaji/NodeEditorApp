@@ -12,7 +12,6 @@ class BlueprintStartNode : public BlueprintNode
 	public: BlueprintStartNode(); 
 	bool Execute() override { return true; } 
 	bool IsStartNode() const override { return true; } 
-	bool AllowsFlowInput() const override { return false; } 
 };
 
 class BlueprintEndNode : public BlueprintNode 
@@ -20,7 +19,6 @@ class BlueprintEndNode : public BlueprintNode
 	public: BlueprintEndNode(); 
 	bool Execute() override { return true; } 
 	bool IsEndNode() const override { return true; } 
-	bool AllowsFlowOutput() const override { return false; } 
 };
 
 class BlueprintPrintMessageNode : public BlueprintNode
