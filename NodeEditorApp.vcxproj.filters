@@ -46,6 +46,10 @@
     <ClCompile Include="Private\NodeEditorRegistery.cpp">
       <Filter>Private</Filter>
     </ClCompile>
+    <ClCompile Include="Private\BlueprintNode.cpp"><Filter>Private</Filter></ClCompile>
+    <ClCompile Include="Private\BlueprintNodes.cpp"><Filter>Private</Filter></ClCompile>
+    <ClCompile Include="Private\BlueprintPins.cpp"><Filter>Private</Filter></ClCompile>
+    <ClCompile Include="Private\GraphPin.cpp"><Filter>Private</Filter></ClCompile>
     <ClCompile Include="Private\BlueprintGraph.cpp">
       <Filter>Private</Filter>
     </ClCompile>
@@ -89,6 +93,10 @@
     <ClInclude Include="Public\NodeGraphFactories.h">
       <Filter>Public</Filter>
     </ClInclude>
+    <ClInclude Include="Public\BlueprintNode.h"><Filter>Public</Filter></ClInclude>
+    <ClInclude Include="Public\BlueprintNodes.h"><Filter>Public</Filter></ClInclude>
+    <ClInclude Include="Public\BlueprintPins.h"><Filter>Public</Filter></ClInclude>
+    <ClInclude Include="Public\GraphPin.h"><Filter>Public</Filter></ClInclude>
     <ClInclude Include="Public\BlueprintGraph.h">
       <Filter>Public</Filter>
     </ClInclude>

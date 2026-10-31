@@ -7,6 +7,7 @@
 #include"NGEditor.h"
 #include"NodeEditorRegistery.h"
 #include"BlueprintGraph.h"
+#include"BlueprintPins.h"
 
 
 bool MyApp::Init()

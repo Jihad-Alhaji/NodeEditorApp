@@ -156,6 +156,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Private\BlueprintGraph.cpp" />
+    <ClCompile Include="Private\BlueprintNode.cpp" />
+    <ClCompile Include="Private\BlueprintNodes.cpp" />
+    <ClCompile Include="Private\BlueprintPins.cpp" />
+    <ClCompile Include="Private\GraphPin.cpp" />
     <ClCompile Include="Private\GraphNode.cpp" />
     <ClCompile Include="Private\GraphView.cpp" />
     <ClCompile Include="Private\MyApp.cpp" />
@@ -173,6 +177,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Public\BlueprintGraph.h" />
+    <ClInclude Include="Public\BlueprintNode.h" />
+    <ClInclude Include="Public\BlueprintNodes.h" />
+    <ClInclude Include="Public\BlueprintPins.h" />
+    <ClInclude Include="Public\GraphPin.h" />
     <ClInclude Include="Public\GraphNode.h" />
     <ClInclude Include="Public\GraphView.h" />
     <ClInclude Include="Public\MyApp.h" />
