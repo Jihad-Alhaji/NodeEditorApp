@@ -3,6 +3,8 @@
 #include<Graphics/SimpleTexture.h>
 #include <vector>
 #include <memory>
+#include <string>
+#include <utility>
 #include"GraphNode.h"
 #include <ArcCore/nlohmann.hpp>
 #include <ResourceManagement/ISerializationInterface.h>
@@ -30,6 +32,8 @@ namespace NodeEditor
         std::vector<std::shared_ptr<GraphNode>> GetNodes() const;
         std::vector<std::shared_ptr<GraphConnection>> GetConnections() const;
         uint64_t GetNextDocumentNodeId() const { return NextDocumentNodeId; }
+        const std::string& GetGraphTypeKey() const { return DocumentGraphType; }
+        void SetGraphTypeKey(std::string typeKey) { DocumentGraphType = std::move(typeKey); }
         void ReplaceContents(std::vector<std::shared_ptr<GraphNode>> nodes, std::vector<std::shared_ptr<GraphConnection>> connections, uint64_t nextId);
 
         DocumentArchive SaveDocument(const std::string& graphType) const;

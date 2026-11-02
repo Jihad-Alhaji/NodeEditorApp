@@ -31,7 +31,6 @@ public:
 	std::vector<std::string> GetRegisteredGraphs();
 	GraphViewFactory* GetGraphFactory(const std::string& Key);
 	std::vector<std::string> GetRegisteredNodeTypes(const std::string& GraphKey) const;
-	std::string GetGraphTypeKey(const NodeEditor::GraphView* graph) const;
 	std::string GetNodeTypeKey(const std::string& GraphKey, const NodeEditor::GraphNode* node) const;
 	std::shared_ptr<NodeEditor::GraphView> SpawnGraph(const std::string& Key);
 	std::shared_ptr<NodeEditor::GraphView> SpawnGraph(const GraphViewFactory& factory);
