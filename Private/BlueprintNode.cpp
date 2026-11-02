@@ -73,5 +73,17 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintNode_Factory::Create(NodeEditorR
 }
 
 
+bool BlueprintNode::Execute()
+{
+	if (!Function) return false;
+	return Function(Inputs, Outputs);
+}
 
+BlueprintNode::ExecutionResult BlueprintNode::ExecuteFlow()
+{
+	if (!Execute()) return ExecutionResult::Failure("Node execution failed: " + Title + " (ID " + std::to_string(NodeId) + ").");
+	for (const auto& pin : Outputs)
+		if (pin && pin->Role == NodeEditor::EPinRole::Flow) return ExecutionResult::Continue(pin->PinKey);
+	return ExecutionResult::Failure("Node " + Title + " completed without a flow output pin.");
+}
 
