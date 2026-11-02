@@ -1,6 +1,6 @@
 # Graph document schema (v1)
 
-This document defines the minimal, versioned JSON format for saving one graph. NE-M1-02 implements the in-memory JSON save/load foundation through `GraphView::SaveDocument` and `GraphView::LoadDocument`; file dialogs and file I/O are not included.
+This document defines the minimal, versioned JSON format for saving one graph. NE-M1-02 implements the in-memory JSON save/load foundation through `GraphView::SaveDocument` and `GraphView::LoadDocument`; file dialogs and file I/O are not included. The registry assigns each created `GraphView` its graph type key, which save/load use directly for document identity and validation rather than discovering the type from runtime class information.
 
 ## NE-M1-03 manual round-trip procedure and status
 
@@ -43,12 +43,12 @@ Status (2026-10-31): manual acceptance passed. After reloading, the app displaye
   ],
   "connections": [
     {
-      "from": { "node_id": "1", "pin_key": "exec.out", "direction": "output" },
-      "to":   { "node_id": "2", "pin_key": "exec.in", "direction": "input" }
+      "from": { "node_id": "1", "pin_key": "exec.out" },
+      "to":   { "node_id": "2", "pin_key": "exec.in" }
     },
     {
-      "from": { "node_id": "2", "pin_key": "exec.out", "direction": "output" },
-      "to":   { "node_id": "3", "pin_key": "exec.in", "direction": "input" }
+      "from": { "node_id": "2", "pin_key": "exec.out" },
+      "to":   { "node_id": "3", "pin_key": "exec.in" }
     }
   ]
 }
@@ -62,7 +62,7 @@ The document uses ARC's `ResourceManagement::Serialization::ISerializationInterf
 - `graph_type`: required, case-sensitive graph registry key. Version 1 stores exactly one graph per document.
 - `next_node_id`: required positive decimal string. It is the next graph-scoped monotonic node instance ID to assign. Keep it greater than every node `id` in the document so deleted IDs are not reused after reload.
 - `nodes`: array of node placements. Each requires a unique positive decimal-string `id`, a case-sensitive `type` key registered within `graph_type`, a finite graph-space `position`, and a `properties` object for user-authored per-instance state.
-- `connections`: array of links. Each endpoint identifies a node by persistent `node_id`, a stable definition pin key, and direction (`input` or `output`). Direction is part of the endpoint so a node can have an input and output with the same pin key.
+- `connections`: array of links. Each endpoint identifies a node by persistent `node_id` and stable definition `pin_key`. The endpoint slot supplies direction: `from` always resolves to an output pin and `to` to an input pin.
 
 For the first Blueprint node, the `Print Message` factory supplies the default string. `properties.message` stores the configured per-instance string. Empty/default `properties` are valid for Start and End.
 
@@ -74,7 +74,7 @@ Node `id` values are graph-document-scoped monotonic IDs serialized as decimal s
 
 Each pin definition has an explicit, stable `pin_key` separate from its user-facing `label`. Keys are immutable identifiers; labels may change or be localized without changing saved links. Keys are unique across all pins on one node definition, including inputs and outputs. Example keys are `exec.in`, `exec.out`, `condition.true`, and `condition.false`; labels can remain `Execute`, `True`, or `False`. `GraphPin::Name` is presentation text and `GraphPin::PinId` is a layout index; neither is a persistent key. Recreate pins, keys, labels, roles, cardinality, and compatibility from registered factories.
 
-Connection IDs are regenerated when links are loaded. Do not serialize runtime node IDs, pin indices, connection hashes, pointers, widget state, titles, callbacks, or derived defaults. Do not serialize viewport zoom/scroll in v1. Arbitrary node-specific user configuration belongs in `properties`; data-value transfer and generic pin values are out of scope for v1.
+New saves omit a separate direction field because it is determined by the `from`/`to` endpoint slot and the corresponding node pin collection. For compatibility, the loader accepts older v1 endpoints that include `direction`, and rejects a present value that does not match the endpoint slot. Connection IDs are regenerated when links are loaded. Do not serialize runtime node IDs, pin indices, connection hashes, pointers, widget state, titles, callbacks, or derived defaults. Do not serialize viewport zoom/scroll in v1. Arbitrary node-specific user configuration belongs in `properties`; data-value transfer and generic pin values are out of scope for v1.
 
 ## Validation and loading
 
@@ -84,9 +84,15 @@ Validate the document before replacing the active graph, so a failed load does n
 - Require canonical positive decimal strings for node IDs, unique IDs, and a valid `next_node_id` greater than every node ID. Reject overflow rather than wrapping.
 - Require every node type key to be registered for the graph type. Construct through its factory, then apply `properties`; unknown node types or invalid properties produce actionable diagnostics.
 - Require finite numeric positions and unique stable pin keys across each node definition.
-- For each link, require existing source/destination node IDs and pins, output-to-input direction, distinct owning nodes, and compatibility accepted by both pins' `AllowConnectionWith` policies. Enforce each endpoint's `AllowMultipleConnections` policy using the reconstructed pins. Reject duplicate links and broken references.
+- For each link, resolve `from` only against source-node outputs and `to` only against destination-node inputs; require existing nodes/pins, distinct owning nodes, and compatibility accepted by both pins' `AllowConnectionWith` policies. If a legacy `direction` field is present, require it to match the endpoint slot. Enforce each endpoint's `AllowMultipleConnections` policy using the reconstructed pins. Reject duplicate links and broken references.
 - Report unsupported schema versions and malformed fields with a path to the offending field or connection where possible.
 - Save structurally valid but not-yet-runnable graphs. Do not require a Start node, complete flow paths, or successful execution to save/load; `BlueprintGraph::Execute` applies execution validation separately.
+
+## NE-M1-04 implementation and verification
+
+`GraphView::SaveDocument` now writes connection endpoints using only `node_id` and `pin_key`. `GraphView::LoadDocument` resolves `from` against outputs and `to` against inputs, and accepts an optional legacy `direction` only when it is a string matching the endpoint slot. These checks occur while staging links, before `ReplaceContents`; existing compatibility, cardinality, uniqueness, and graph identity checks remain in place. The schema remains version 1.
+
+Verification on 2026-11-02: the development MSBuild attempt compiled the changed `Private/GraphView.cpp`, but linking in this agent environment failed with `LNK1101: incorrect MSPDB140.DLL version` (reproduced on retry). The product owner then built the app and manually confirmed save/load worked and the saved JSON omitted endpoint `direction`. Matching legacy direction and malformed/conflicting-value rejection without graph replacement were not separately exercised. The product owner accepted the implementation as complete.
 
 ## Deterministic output
 
