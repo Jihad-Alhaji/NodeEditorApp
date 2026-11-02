@@ -82,8 +82,14 @@ bool BlueprintNode::Execute()
 BlueprintNode::ExecutionResult BlueprintNode::ExecuteFlow()
 {
 	if (!Execute()) return ExecutionResult::Failure("Node execution failed: " + Title + " (ID " + std::to_string(NodeId) + ").");
+	std::shared_ptr<NodeEditor::GraphPin> flowOutput;
 	for (const auto& pin : Outputs)
-		if (pin && pin->Role == NodeEditor::EPinRole::Flow) return ExecutionResult::Continue(pin->PinKey);
+		if (pin && pin->Role == NodeEditor::EPinRole::Flow)
+		{
+			if (flowOutput) return ExecutionResult::Failure("Node " + Title + " must select a flow output because it defines multiple flow outputs.");
+			flowOutput = pin;
+		}
+	if (flowOutput) return ExecutionResult::Continue(flowOutput->PinKey);
 	return ExecutionResult::Failure("Node " + Title + " completed without a flow output pin.");
 }
 

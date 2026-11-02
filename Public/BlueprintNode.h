@@ -3,6 +3,7 @@
 #include "NodeGraphFactories.h"
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 class BlueprintNode : public NodeEditor::GraphNode
 {

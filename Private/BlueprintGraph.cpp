@@ -93,6 +93,7 @@ BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
 		if (from->Role == EPinRole::Flow)
 		{
 			if (!from->IsFlowPin() || !to->IsFlowPin()) return "Connection " + std::to_string(id) + " has invalid flow pin metadata.";
+			if (!blueprintNodes.count(source.get()) || !blueprintNodes.count(destination.get())) return "Connection " + std::to_string(id) + " links a flow pin on a node that does not implement Blueprint execution.";
 			if (from->AllowMultipleConnections()) return "Flow output " + from->PinKey + " on node " + source->Title + " must allow at most one connection.";
 			if (flowByOutput.count(from.get())) return "Flow output " + from->PinKey + " on node " + source->Title + " has multiple outgoing links.";
 			flowByOutput.emplace(from.get(), FlowEdge{ from, to }); ++incoming[destination.get()];
