@@ -2,10 +2,7 @@
 #include "BlueprintNode.h"
 #include "GraphPin.h"
 #include <string>
-class BlueprintFlowPin : public NodeEditor::GraphPin 
-{ 
-	public: BlueprintFlowPin(); 
-};
+
 
 class BlueprintStartNode : public BlueprintNode 
 { 

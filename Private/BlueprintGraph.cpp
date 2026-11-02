@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
-
+#include "BlueprintPins.h"
 
 
 BlueprintGraph::BlueprintGraph()
@@ -159,3 +159,38 @@ BlueprintGraph::ExecutionResult BlueprintGraph::Execute(std::size_t stepLimit)
 	}
 	result.Success = true; result.Diagnostic = "Execution completed successfully."; return result;
 }
+
+
+
+
+void RegisterBlueprintGraph()
+{
+	auto reg = NodeEditorRegistery::Get();
+	// Register the Blueprint graph type and its associated factories for nodes and pins
+	reg->RegisterGraph("Blueprint", std::make_shared<BlueprintGraph_Factory>());
+
+	// Register the factories for the Blueprint pins
+	reg->RegisterPin("default", std::make_shared<BlueprintPin_Default_Factory>());
+	reg->RegisterPin("flow", std::make_shared<BlueprintPin_Flow_Factory>());
+
+	// Register the factories for the Blueprint nodes
+	{//default node for testing
+		auto d1 = std::make_shared<BlueprintNode_Factory>();
+		d1->TypeKey = "default";
+		d1->Title = "default node";
+		d1->Inputs.push_back({ "flow","in", "exec.in" });
+		d1->Outputs.push_back({ "flow","out", "exec.out" });
+		d1->Function = [](const BlueprintNode::Args_t& in , const BlueprintNode::Args_t& out) -> bool
+		{
+			Logging::LogSystem::ArcLogger.Send(Logging::LogVerbosity::NOTE, "default node executed");
+			return true;
+		};
+
+		reg->RegisterNode("Blueprint", "default", std::move(d1));
+	}
+	reg->RegisterNode("Blueprint", "Start", std::make_shared<BlueprintStartNode_Factory>());
+	reg->RegisterNode("Blueprint", "Print Message", std::make_shared<BlueprintPrintMessageNode_Factory>());
+	reg->RegisterNode("Blueprint", "End", std::make_shared<BlueprintEndNode_Factory>());
+	
+}
+

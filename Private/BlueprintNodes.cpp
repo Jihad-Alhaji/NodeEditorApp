@@ -3,11 +3,7 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_stdlib.h>
 #include <ArcLog/LogSystem.h>
-BlueprintFlowPin::BlueprintFlowPin()
-{
-	Role = NodeEditor::EPinRole::Flow;
-}
-
+#include "blueprintPins.h"
 BlueprintStartNode::BlueprintStartNode() : BlueprintNode()
 {
 	Title = "Start";
