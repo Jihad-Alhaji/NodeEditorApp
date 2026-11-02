@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "BlueprintNode.h"
 #include "GraphPin.h"
 #include <string>
@@ -9,13 +9,6 @@ class BlueprintStartNode : public BlueprintNode
 	public: BlueprintStartNode(); 
 	bool Execute() override { return true; } 
 	bool IsStartNode() const override { return true; } 
-};
-
-class BlueprintEndNode : public BlueprintNode 
-{ 
-	public: BlueprintEndNode(); 
-	bool Execute() override { return true; } 
-	bool IsEndNode() const override { return true; } 
 };
 
 class BlueprintPrintMessageNode : public BlueprintNode
@@ -31,12 +24,6 @@ class BlueprintPrintMessageNode : public BlueprintNode
 struct BlueprintStartNode_Factory : public GraphNodeFactory 
 { 
 	std::string GetTypeKey() const override { return "Start"; }
-	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery*) const override; 
-};
-
-struct BlueprintEndNode_Factory : public GraphNodeFactory 
-{ 
-	std::string GetTypeKey() const override { return "End"; }
 	std::shared_ptr<NodeEditor::GraphNode> Create(class NodeEditorRegistery*) const override; 
 };
 

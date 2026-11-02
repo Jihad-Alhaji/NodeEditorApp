@@ -6,9 +6,9 @@ This document defines the minimal, versioned JSON format for saving one graph. N
 
 This acceptance workflow exercises the first useful Blueprint graph with a non-default `Print Message` string. It is a manual application check, not an automated test.
 
-1. Start the app and create or load a Blueprint graph containing `Start → Print Message → End`. Record each node's document ID and graph position.
+1. Start the app and create or load a Blueprint graph containing `Start → Print Message`. Record each node's document ID and graph position.
 2. Set the Print Message text to `NE-M1-03 round-trip check` (or another clearly non-default value).
-3. Trigger the app's save action. Confirm the resource document contains the same three node IDs and positions, both `exec.out` to `exec.in` connections, and `properties.message` with the authored string on the Print Message node.
+3. Trigger the app's save action. Confirm the resource document contains the `exec.out` to `exec.in` connection, and `properties.message` with the authored string on the Print Message node.
 4. Close and restart the app (or clear the graph and invoke load). Confirm the node types, IDs, positions, links, and authored message match the saved document.
 5. Execute the graph. Confirm the application log emits the authored string and the execution result succeeds.
 
@@ -20,7 +20,7 @@ Status (2026-10-31): manual acceptance passed. After reloading, the app displaye
 {
   "schema_version": 1,
   "graph_type": "Blueprint",
-  "next_node_id": "4",
+  "next_node_id": "3",
   "nodes": [
     {
       "id": "1",
@@ -33,22 +33,6 @@ Status (2026-10-31): manual acceptance passed. After reloading, the app displaye
       "type": "Print Message",
       "position": { "x": 320.0, "y": 120.0 },
       "properties": { "message": "Hello from my workflow" }
-    },
-    {
-      "id": "3",
-      "type": "End",
-      "position": { "x": 640.0, "y": 120.0 },
-      "properties": {}
-    }
-  ],
-  "connections": [
-    {
-      "from": { "node_id": "1", "pin_key": "exec.out" },
-      "to":   { "node_id": "2", "pin_key": "exec.in" }
-    },
-    {
-      "from": { "node_id": "2", "pin_key": "exec.out" },
-      "to":   { "node_id": "3", "pin_key": "exec.in" }
     }
   ]
 }
@@ -64,7 +48,7 @@ The document uses ARC's `ResourceManagement::Serialization::ISerializationInterf
 - `nodes`: array of node placements. Each requires a unique positive decimal-string `id`, a case-sensitive `type` key registered within `graph_type`, a finite graph-space `position`, and a `properties` object for user-authored per-instance state.
 - `connections`: array of links. Each endpoint identifies a node by persistent `node_id` and stable definition `pin_key`. The endpoint slot supplies direction: `from` always resolves to an output pin and `to` to an input pin.
 
-For the first Blueprint node, the `Print Message` factory supplies the default string. `properties.message` stores the configured per-instance string. Empty/default `properties` are valid for Start and End.
+For the first Blueprint node, the `Print Message` factory supplies the default string. `properties.message` stores the configured per-instance string. Empty/default `properties` are valid for Start.
 
 ## Identity and derived state
 
@@ -100,8 +84,16 @@ For readable diffs, serialize nodes in ascending numeric instance-ID order and c
 
 ## Branching compatibility
 
-The schema can represent a node with several flow output pins because every output has its own stable key and each saved connection names the exact output key. Each individual flow output pin allows at most one outgoing link; a node may expose several distinct output pins. A branch node can define `condition.true` and `condition.false` outputs and the executor can later follow the key selected by that node's execution result. The v1 linear executor does not yet support selecting among multiple flow outputs; branching execution is a separate runtime task.
+The schema can represent a node with several flow output pins because every output has its own stable key and each saved connection names the exact output key. Each individual flow output pin allows at most one outgoing link; a node may expose several distinct output pins. A branch node can define `condition.true` and `condition.false` outputs. The runtime executor now follows the flow output key returned by a node, without changing the v1 document format. Branch condition/value semantics remain node-owned and are not defined by this schema. Runtime implementation is present under NE-M3-06; application-level branching verification is pending a concrete node that overrides `ExecuteFlow`.
 
 ## Out of scope
 
 Multiple graphs per file, graph-instance IDs, generic graph migrations, Lua/plugin schema negotiation, pin value serialization, runtime packaging, viewport/editor session state, and unknown-node placeholders are deferred.
+
+
+## Runtime terminal completion and compatibility
+
+A successful node with no flow output pins completes its execution path, so a simple graph can end at Print Message without a dedicated End node. The schema-v1 format remains unchanged. Existing saved v1 graphs containing a node with type End receive the ordinary unknown-node diagnostic during load because there is no End factory; no legacy factory is retained. Resources/BlueprintGraph.json is user-authored graph data and must not be rewritten as part of this runtime change.
+
+
+Selected output termination: when a node selects a valid flow output key that has no connection, execution completes that path successfully. An invalid selected key remains an error.

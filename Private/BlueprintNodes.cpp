@@ -1,4 +1,4 @@
-#include "BlueprintNodes.h"
+﻿#include "BlueprintNodes.h"
 #include "NodeEditorRegistery.h"
 #include <imgui/imgui.h>
 #include <imgui/imgui_stdlib.h>
@@ -7,13 +7,6 @@
 BlueprintStartNode::BlueprintStartNode() : BlueprintNode()
 {
 	Title = "Start";
-	NodeSize = { 160, 80 };
-	SetSize(NodeSize);
-}
-
-BlueprintEndNode::BlueprintEndNode() : BlueprintNode()
-{
-	Title = "End";
 	NodeSize = { 160, 80 };
 	SetSize(NodeSize);
 }
@@ -47,18 +40,6 @@ std::shared_ptr<NodeEditor::GraphNode> BlueprintStartNode_Factory::Create(NodeEd
 	flowOut->PinKey = "exec.out";
 	flowOut->Type = NodeEditor::EPinType::Output;
 	node->AddPin(std::move(flowOut));
-	return node;
-}
-
-std::shared_ptr<NodeEditor::GraphNode> BlueprintEndNode_Factory::Create(NodeEditorRegistery*) const
-{
-	auto node = std::make_shared<BlueprintEndNode>();
-	node->TypeKey = "End";
-	auto flowIn = std::make_shared<BlueprintFlowPin>();
-	flowIn->SetName("flow");
-	flowIn->PinKey = "exec.in";
-	flowIn->Type = NodeEditor::EPinType::Input;
-	node->AddPin(std::move(flowIn));
 	return node;
 }
 

@@ -90,6 +90,6 @@ BlueprintNode::ExecutionResult BlueprintNode::ExecuteFlow()
 			flowOutput = pin;
 		}
 	if (flowOutput) return ExecutionResult::Continue(flowOutput->PinKey);
-	return ExecutionResult::Failure("Node " + Title + " completed without a flow output pin.");
+	return ExecutionResult::Complete();
 }
 

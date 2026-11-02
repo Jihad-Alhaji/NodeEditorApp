@@ -29,7 +29,7 @@ public:
     // Branching nodes override this to return the selected stable flow PinKey.
     virtual ExecutionResult ExecuteFlow();
     virtual bool IsStartNode() const { return false; }
-    virtual bool IsEndNode() const { return false; }
+
 };
 struct PinDef { std::string Factory; std::string Name; std::string PinKey; };
 struct BlueprintNode_Factory : public GraphNodeFactory
